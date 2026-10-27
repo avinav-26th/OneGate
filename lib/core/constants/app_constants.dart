@@ -1,5 +1,5 @@
 class AppConstants {
-  static const String appName = 'One Gate';
+  static const String appName = 'OneGate';
   static const String appTagline = 'One access desk. Every project.';
   
   static const List<String> projects = [

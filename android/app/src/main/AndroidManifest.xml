@@ -5,7 +5,7 @@
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
 
     <application
-        android:label="One Gate"
+        android:label="OneGate"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

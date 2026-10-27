@@ -8,7 +8,7 @@ class OneGateApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'One Gate',
+      title: 'OneGate',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       home: const MainNavigationShell(),
