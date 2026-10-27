@@ -143,6 +143,10 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: const Color(0xFFF4F7F8),
         title: const Text('Visitor Details'),
         actions: [
           IconButton(
@@ -310,7 +314,7 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen> {
         child: CustomButton(
           text: 'Record Check-Out',
           icon: Icons.logout,
-          color: const Color(0xFF475569),
+          color: const Color(0xFF142B3B),
           isLoading: _isActionLoading,
           onPressed: _handleCheckOut,
         ),

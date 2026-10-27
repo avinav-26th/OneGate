@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="440" viewBox="0 0 640 440" fill="none">
+  <title>One Gate residential buildings illustration</title>
+  <desc>Minimal blue-grey residential buildings with windows, soft clouds, two trees, and a ground line on a transparent background.</desc>
+  <defs>
+    <linearGradient id="towerFront" x1="295" y1="105" x2="390" y2="410" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#AFC5DD"/>
+      <stop offset="1" stop-color="#7D9AB8"/>
+    </linearGradient>
+    <linearGradient id="towerSide" x1="376" y1="80" x2="445" y2="410" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5E7898"/>
+      <stop offset="1" stop-color="#344F70"/>
+    </linearGradient>
+    <linearGradient id="lowBuilding" x1="155" y1="220" x2="275" y2="410" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C4D7EA"/>
+      <stop offset="1" stop-color="#9DB8D3"/>
+    </linearGradient>
+    <linearGradient id="mintTree" x1="495" y1="320" x2="548" y2="388" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9FE5D5"/>
+      <stop offset="1" stop-color="#66CDBA"/>
+    </linearGradient>
+    <linearGradient id="blueTree" x1="73" y1="336" x2="116" y2="393" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5B8EAB"/>
+      <stop offset="1" stop-color="#315C77"/>
+    </linearGradient>
+  </defs>
+
+  <!-- soft clouds -->
+  <g fill="#DCEFF5" opacity="0.78">
+    <path d="M83 104c-15 0-27-11-27-25 0-13 10-24 23-25 5-18 22-31 42-31 23 0 42 17 44 39 15 1 27 12 27 27 0 8-4 15-10 20H83z"/>
+    <path d="M433 96c-12 0-22-9-22-21 0-11 8-20 19-21 4-14 18-24 34-24 19 0 34 14 36 32 12 1 22 10 22 22 0 5-2 9-5 12H433z" opacity="0.72"/>
+  </g>
+
+  <!-- left residential building -->
+  <path d="M154 410V256l68-49 62 49v154H154Z" fill="url(#lowBuilding)"/>
+  <path d="M154 256l68-49 62 49" stroke="#B6CDE2" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M195 410v-42c0-4 3-7 7-7h22c4 0 7 3 7 7v42" fill="#7F9EBB"/>
+  <g fill="#EEF5FA">
+    <rect x="176" y="272" width="13" height="19" rx="2"/>
+    <rect x="202" y="272" width="13" height="19" rx="2"/>
+    <rect x="228" y="272" width="13" height="19" rx="2"/>
+    <rect x="176" y="305" width="13" height="19" rx="2"/>
+    <rect x="202" y="305" width="13" height="19" rx="2"/>
+    <rect x="228" y="305" width="13" height="19" rx="2"/>
+    <rect x="176" y="338" width="13" height="19" rx="2"/>
+    <rect x="228" y="338" width="13" height="19" rx="2"/>
+  </g>
+
+  <!-- main tower: front and side -->
+  <path d="M284 410V137l90-65 70 47v291H284Z" fill="url(#towerFront)"/>
+  <path d="M374 72l70 47v291h-70V72Z" fill="url(#towerSide)"/>
+  <path d="M284 137l90-65 70 47" stroke="#9CB4CE" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M374 72v338" stroke="#2D4868" stroke-opacity="0.35" stroke-width="2"/>
+
+  <!-- front windows -->
+  <g fill="#F1F6FA">
+    <rect x="303" y="157" width="14" height="22" rx="2"/>
+    <rect x="333" y="157" width="14" height="22" rx="2"/>
+    <rect x="303" y="194" width="14" height="22" rx="2"/>
+    <rect x="333" y="194" width="14" height="22" rx="2"/>
+    <rect x="303" y="231" width="14" height="22" rx="2"/>
+    <rect x="333" y="231" width="14" height="22" rx="2"/>
+    <rect x="303" y="268" width="14" height="22" rx="2"/>
+    <rect x="333" y="268" width="14" height="22" rx="2"/>
+    <rect x="303" y="305" width="14" height="22" rx="2"/>
+    <rect x="333" y="305" width="14" height="22" rx="2"/>
+    <rect x="303" y="342" width="14" height="22" rx="2"/>
+    <rect x="333" y="342" width="14" height="22" rx="2"/>
+  </g>
+  <!-- side windows -->
+  <g fill="#DDE8F2">
+    <rect x="391" y="141" width="13" height="19" rx="2"/>
+    <rect x="419" y="159" width="12" height="19" rx="2"/>
+    <rect x="391" y="176" width="13" height="19" rx="2"/>
+    <rect x="419" y="196" width="12" height="19" rx="2"/>
+    <rect x="391" y="211" width="13" height="19" rx="2"/>
+    <rect x="419" y="233" width="12" height="19" rx="2"/>
+    <rect x="391" y="246" width="13" height="19" rx="2"/>
+    <rect x="419" y="270" width="12" height="19" rx="2"/>
+    <rect x="391" y="281" width="13" height="19" rx="2"/>
+    <rect x="419" y="307" width="12" height="19" rx="2"/>
+    <rect x="391" y="316" width="13" height="19" rx="2"/>
+    <rect x="419" y="344" width="12" height="19" rx="2"/>
+  </g>
+  <!-- tower entrance -->
+  <path d="M348 410v-44c0-5 4-9 9-9h14v53h-23Z" fill="#3E5C7C"/>
+
+  <!-- trees -->
+  <g>
+    <path d="M98 410v-33" stroke="#365C73" stroke-width="6" stroke-linecap="round"/>
+    <path d="M98 339c-16 0-27 15-27 30 0 12 8 20 18 22 1 9 5 13 9 13s8-5 9-13c11-3 18-12 18-23 0-15-11-29-27-29Z" fill="url(#blueTree)"/>
+    <path d="M520 410v-39" stroke="#356B70" stroke-width="6" stroke-linecap="round"/>
+    <path d="M520 326c-12 0-21 10-22 23-10 3-16 12-16 22 0 12 8 20 19 22 3 8 10 12 18 12s15-4 18-12c11-2 19-11 19-22 0-11-7-20-17-23-1-12-9-22-19-22Z" fill="url(#mintTree)"/>
+  </g>
+
+  <!-- ground line -->
+  <path d="M48 412H590" stroke="#526F89" stroke-width="6" stroke-linecap="round"/>
+</svg>

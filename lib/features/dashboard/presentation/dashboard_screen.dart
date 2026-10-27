@@ -1,21 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../visitors/presentation/controllers/visitor_list_controller.dart';
-import '../../visitors/presentation/screens/visitor_form_screen.dart';
+import '../../visitors/presentation/screens/visitor_details_screen.dart';
 import 'controllers/dashboard_controller.dart';
-import 'widgets/dashboard_stat_card.dart';
+import 'widgets/greeting_banner.dart';
+import 'widgets/recent_visitor_tile.dart';
+import 'widgets/today_metrics_card.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   final Function(int)? onNavigateTab;
 
   const DashboardScreen({super.key, this.onNavigateTab});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
     final metricsAsync = ref.watch(dashboardMetricsProvider);
+    final visitorsAsync = ref.watch(recentVisitorsProvider);
 
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: const Color(0xFFF4F7F8),
         title: Row(
           children: [
             ClipRRect(
@@ -31,11 +49,19 @@ class DashboardScreen extends ConsumerWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('OneGate'),
+                const Text(
+                  'OneGate',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF142B3B),
+                    letterSpacing: -0.5,
+                  ),
+                ),
                 Text(
                   'Sumadhura Real Estate',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w500,
                     color: Colors.grey.shade600,
                   ),
@@ -46,7 +72,7 @@ class DashboardScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Color(0xFF142B3B)),
             onPressed: () {
               ref.read(visitorListNotifierProvider.notifier).refresh();
             },
@@ -54,118 +80,52 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       body: RefreshIndicator(
+        backgroundColor: const Color(0xFF142B3B),
+        color: const Color(0xFF38DCC0),
         onRefresh: () async {
           await ref.read(visitorListNotifierProvider.notifier).refresh();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        'Front Desk & Security',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Visitor Management Console',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Manage project visits, monitor gate entry/exit, and issue digital QR passes.',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 13,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
+              const GreetingBanner(),
+              const SizedBox(height: 20),
               const Text(
                 'Today\'s Activity Metrics',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: Color(0xFF142B3B),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               metricsAsync.when(
-                data: (metrics) => Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DashboardStatCard(
-                            title: 'Total Today',
-                            count: metrics.totalToday,
-                            icon: Icons.people_outline,
-                            accentColor: const Color(0xFF3B82F6),
-                            onTap: () => onNavigateTab?.call(1),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: DashboardStatCard(
-                            title: 'Currently In',
-                            count: metrics.currentlyCheckedIn,
-                            icon: Icons.login_outlined,
-                            accentColor: const Color(0xFF059669),
-                            onTap: () {
-                              ref.read(selectedStatusFilterProvider.notifier).state = null;
-                              onNavigateTab?.call(1);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    DashboardStatCard(
-                      title: 'Checked Out Today',
-                      count: metrics.checkedOutToday,
-                      icon: Icons.logout_outlined,
-                      accentColor: const Color(0xFF64748B),
-                      onTap: () => onNavigateTab?.call(1),
-                    ),
-                  ],
+                data: (metrics) => TodayMetricsCard(
+                  totalToday: metrics.totalToday,
+                  currentlyCheckedIn: metrics.currentlyCheckedIn,
+                  checkedOutToday: metrics.checkedOutToday,
+                  onTapTotal: () {
+                    ref.read(visitorQuickFilterProvider.notifier).state =
+                        VisitorQuickFilter.totalToday;
+                    widget.onNavigateTab?.call(2);
+                  },
+                  onTapCurrentlyIn: () {
+                    ref.read(visitorQuickFilterProvider.notifier).state =
+                        VisitorQuickFilter.currentlyIn;
+                    widget.onNavigateTab?.call(2);
+                  },
+                  onTapCheckedOut: () {
+                    ref.read(visitorQuickFilterProvider.notifier).state =
+                        VisitorQuickFilter.checkedOutToday;
+                    widget.onNavigateTab?.call(2);
+                  },
                 ),
                 loading: () => const Center(
                   child: Padding(
-                    padding: EdgeInsets.all(32),
+                    padding: EdgeInsets.all(24),
                     child: CircularProgressIndicator(),
                   ),
                 ),
@@ -176,50 +136,94 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 28),
-              const Text(
-                'Quick Operations',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 24),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const VisitorFormScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.person_add_outlined, size: 18),
-                      label: const Text('Register Visitor'),
+                  const Text(
+                    'Recent Visitors',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF142B3B),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => onNavigateTab?.call(2),
-                      icon: const Icon(Icons.qr_code_scanner_outlined, size: 18),
-                      label: const Text('Scan QR Code'),
+                  TextButton(
+                    onPressed: () {
+                      ref.read(visitorQuickFilterProvider.notifier).state =
+                          VisitorQuickFilter.all;
+                      widget.onNavigateTab?.call(2);
+                    },
+                    child: const Text(
+                      'View all',
+                      style: TextStyle(
+                        color: Color(0xFF0E8B75),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => onNavigateTab?.call(1),
-                  icon: const Icon(Icons.format_list_bulleted_outlined, size: 18),
-                  label: const Text('View All Registered Visitors'),
+              const SizedBox(height: 8),
+              visitorsAsync.when(
+                data: (visitors) {
+                  if (visitors.isEmpty) {
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 32),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(Icons.people_outline, size: 36, color: Color(0xFF94A3B8)),
+                          SizedBox(height: 8),
+                          Text(
+                            'No visitors recorded today',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: visitors.length,
+                    itemBuilder: (context, index) {
+                      final visitor = visitors[index];
+                      return RecentVisitorTile(
+                        visitor: visitor,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => VisitorDetailsScreen(visitor: visitor),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                error: (error, stack) => Center(
+                  child: Text('Error loading visitors: $error'),
                 ),
               ),
+              const SizedBox(height: 80),
             ],
           ),
         ),

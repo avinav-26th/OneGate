@@ -17,8 +17,12 @@ class VisitorListScreen extends ConsumerStatefulWidget {
   ConsumerState<VisitorListScreen> createState() => _VisitorListScreenState();
 }
 
-class _VisitorListScreenState extends ConsumerState<VisitorListScreen> {
+class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
+    with AutomaticKeepAliveClientMixin {
   late final TextEditingController _searchController;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -72,12 +76,18 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final visitorsAsync = ref.watch(filteredVisitorsProvider);
     final selectedProject = ref.watch(selectedProjectFilterProvider);
     final selectedStatus = ref.watch(selectedStatusFilterProvider);
+    final quickFilter = ref.watch(visitorQuickFilterProvider);
 
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: const Color(0xFFF4F7F8),
         title: const Text('Visitor Registry'),
         actions: [
           IconButton(
@@ -94,8 +104,41 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen> {
       ),
       body: Column(
         children: [
+          if (quickFilter != VisitorQuickFilter.all)
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF38DCC0).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF38DCC0).withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.filter_alt, size: 16, color: Color(0xFF0E8B75)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Filtered by: ${quickFilter.label}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF0E8B75),
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      ref.read(visitorQuickFilterProvider.notifier).state =
+                          VisitorQuickFilter.all;
+                    },
+                    child: const Icon(Icons.close, size: 16, color: Color(0xFF0E8B75)),
+                  ),
+                ],
+              ),
+            ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: TextField(
               controller: _searchController,
               onChanged: (val) {
@@ -118,7 +161,7 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen> {
           ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
                 FilterChip(
@@ -155,9 +198,11 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Expanded(
             child: RefreshIndicator(
+              backgroundColor: const Color(0xFF142B3B),
+              color: const Color(0xFF38DCC0),
               onRefresh: () async {
                 await ref.read(visitorListNotifierProvider.notifier).refresh();
               },
@@ -166,7 +211,8 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen> {
                   if (visitors.isEmpty) {
                     final isFiltered = _searchController.text.isNotEmpty ||
                         selectedProject != null ||
-                        selectedStatus != null;
+                        selectedStatus != null ||
+                        quickFilter != VisitorQuickFilter.all;
                     return EmptyStateWidget(
                       icon: isFiltered ? Icons.search_off : Icons.people_outline,
                       title: isFiltered ? 'No matching visitors' : 'No visitors registered yet',
@@ -180,6 +226,8 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen> {
                           ref.read(visitorSearchQueryProvider.notifier).state = '';
                           ref.read(selectedProjectFilterProvider.notifier).state = null;
                           ref.read(selectedStatusFilterProvider.notifier).state = null;
+                          ref.read(visitorQuickFilterProvider.notifier).state =
+                              VisitorQuickFilter.all;
                         } else {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -237,19 +285,6 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen> {
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const VisitorFormScreen(),
-            ),
-          );
-        },
-        backgroundColor: const Color(0xFF0F172A),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.person_add),
-        label: const Text('New Visitor'),
       ),
     );
   }

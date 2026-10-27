@@ -1,12 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../domain/visitor.dart';
 import '../../domain/visitor_repository.dart';
 import '../../domain/visitor_status.dart';
 import 'visitor_providers.dart';
 
+enum VisitorQuickFilter {
+  all('All'),
+  totalToday('Today\'s Visitors'),
+  currentlyIn('Currently In'),
+  checkedOutToday('Checked Out Today');
+
+  final String label;
+  const VisitorQuickFilter(this.label);
+}
+
 final visitorSearchQueryProvider = StateProvider<String>((ref) => '');
 final selectedProjectFilterProvider = StateProvider<String?>((ref) => null);
 final selectedStatusFilterProvider = StateProvider<VisitorStatus?>((ref) => null);
+final visitorQuickFilterProvider = StateProvider<VisitorQuickFilter>((ref) => VisitorQuickFilter.all);
 
 class VisitorListNotifier extends StateNotifier<AsyncValue<List<Visitor>>> {
   final VisitorRepository _repository;
@@ -65,11 +77,25 @@ final visitorListNotifierProvider =
   return VisitorListNotifier(repository);
 });
 
+final recentVisitorsProvider = Provider<AsyncValue<List<Visitor>>>((ref) {
+  final visitorsAsync = ref.watch(visitorListNotifierProvider);
+  return visitorsAsync.whenData((visitors) {
+    final list = List<Visitor>.from(visitors);
+    list.sort((a, b) {
+      final timeA = a.checkInTime ?? a.createdAt;
+      final timeB = b.checkInTime ?? b.createdAt;
+      return timeB.compareTo(timeA);
+    });
+    return list;
+  });
+});
+
 final filteredVisitorsProvider = Provider<AsyncValue<List<Visitor>>>((ref) {
   final visitorsAsync = ref.watch(visitorListNotifierProvider);
   final searchQuery = ref.watch(visitorSearchQueryProvider).trim().toLowerCase();
   final projectFilter = ref.watch(selectedProjectFilterProvider);
   final statusFilter = ref.watch(selectedStatusFilterProvider);
+  final quickFilter = ref.watch(visitorQuickFilterProvider);
 
   return visitorsAsync.whenData((visitors) {
     return visitors.where((visitor) {
@@ -81,7 +107,15 @@ final filteredVisitorsProvider = Provider<AsyncValue<List<Visitor>>>((ref) {
 
       final matchesStatus = statusFilter == null || visitor.status == statusFilter;
 
-      return matchesSearch && matchesProject && matchesStatus;
+      final matchesQuickFilter = switch (quickFilter) {
+        VisitorQuickFilter.all => true,
+        VisitorQuickFilter.totalToday => DateFormatter.isToday(visitor.createdAt),
+        VisitorQuickFilter.currentlyIn => visitor.status == VisitorStatus.checkedIn,
+        VisitorQuickFilter.checkedOutToday =>
+            visitor.status == VisitorStatus.checkedOut && DateFormatter.isToday(visitor.checkOutTime),
+      };
+
+      return matchesSearch && matchesProject && matchesStatus && matchesQuickFilter;
     }).toList();
   });
 });

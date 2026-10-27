@@ -126,6 +126,10 @@ class _VisitorFormScreenState extends ConsumerState<VisitorFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: const Color(0xFFF4F7F8),
         title: Text(isEditing ? 'Edit Visitor' : 'Visitor Registration'),
       ),
       body: SafeArea(

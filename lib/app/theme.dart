@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primaryNavy = Color(0xFF0F172A);
-  static const Color accentIndigo = Color(0xFF4F46E5);
+  static const Color primaryNavy = Color(0xFF142B3B);
+  static const Color accentMint = Color(0xFF38DCC0);
   static const Color secondarySlate = Color(0xFF334155);
-  static const Color backgroundLight = Color(0xFFF8FAFC);
+  static const Color backgroundLight = Color(0xFFF4F7F8);
   static const Color surfaceWhite = Color(0xFFFFFFFF);
-  static const Color borderSubtle = Color(0xFFE2E8F0);
+  static const Color borderSubtle = Color(0xFFE5E7EB);
 
   static const Color statusRegistered = Color(0xFFD97706);
   static const Color statusCheckedIn = Color(0xFF059669);
@@ -16,17 +16,19 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: accentIndigo,
+        seedColor: primaryNavy,
         primary: primaryNavy,
-        secondary: accentIndigo,
+        secondary: accentMint,
         surface: surfaceWhite,
         surfaceContainerHighest: backgroundLight,
       ),
       scaffoldBackgroundColor: backgroundLight,
       appBarTheme: const AppBarTheme(
-        backgroundColor: surfaceWhite,
+        backgroundColor: backgroundLight,
         foregroundColor: primaryNavy,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: false,
         titleTextStyle: TextStyle(
           color: primaryNavy,
@@ -43,6 +45,15 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: borderSubtle, width: 1),
         ),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: primaryNavy,
+        foregroundColor: Colors.white,
+        elevation: 2,
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: accentMint,
+        refreshBackgroundColor: primaryNavy,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -85,13 +96,13 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: borderSubtle),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: accentIndigo, width: 1.5),
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+          borderSide: BorderSide(color: accentMint, width: 1.8),
         ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.redAccent),
+        errorBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+          borderSide: BorderSide(color: Colors.redAccent),
         ),
         hintStyle: const TextStyle(
           color: Color(0xFF94A3B8),
@@ -100,15 +111,15 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surfaceWhite,
-        indicatorColor: accentIndigo.withValues(alpha: 0.12),
+        indicatorColor: accentMint.withValues(alpha: 0.25),
         elevation: 3,
         height: 68,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: accentIndigo,
+              fontWeight: FontWeight.w700,
+              color: primaryNavy,
             );
           }
           return const TextStyle(
