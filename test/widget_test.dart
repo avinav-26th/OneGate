@@ -1,30 +1,40 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:one_gate/main.dart';
+import 'package:one_gate/core/utils/validators.dart';
+import 'package:one_gate/features/visitors/domain/visit_status_policy.dart';
+import 'package:one_gate/features/visitors/domain/visitor_status.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('VisitStatusPolicy Tests', () {
+    test('Check-in allowed only when status is registered', () {
+      expect(VisitStatusPolicy.canCheckIn(VisitorStatus.registered), isTrue);
+      expect(VisitStatusPolicy.canCheckIn(VisitorStatus.checkedIn), isFalse);
+      expect(VisitStatusPolicy.canCheckIn(VisitorStatus.checkedOut), isFalse);
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    test('Check-out allowed only when status is checkedIn', () {
+      expect(VisitStatusPolicy.canCheckOut(VisitorStatus.registered), isFalse);
+      expect(VisitStatusPolicy.canCheckOut(VisitorStatus.checkedIn), isTrue);
+      expect(VisitStatusPolicy.canCheckOut(VisitorStatus.checkedOut), isFalse);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('CheckedOut status is terminal', () {
+      expect(VisitStatusPolicy.isCompleted(VisitorStatus.checkedOut), isTrue);
+      expect(VisitStatusPolicy.isCompleted(VisitorStatus.registered), isFalse);
+      expect(VisitStatusPolicy.isCompleted(VisitorStatus.checkedIn), isFalse);
+    });
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  group('Validators Tests', () {
+    test('Mobile number must be exactly 10 digits', () {
+      expect(Validators.validateMobile('9876543210'), isNull);
+      expect(Validators.validateMobile('123'), isNotNull);
+      expect(Validators.validateMobile('987654321012'), isNotNull);
+      expect(Validators.validateMobile('abcdefghij'), isNotNull);
+    });
+
+    test('Visitor name must not be empty', () {
+      expect(Validators.validateName('Rahul'), isNull);
+      expect(Validators.validateName(''), isNotNull);
+    });
   });
 }
