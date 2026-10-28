@@ -10,6 +10,7 @@ import 'controllers/dashboard_controller.dart';
 import 'widgets/greeting_banner.dart';
 import 'widgets/recent_visitor_tile.dart';
 import 'widgets/today_metrics_card.dart';
+import '../../../core/widgets/shimmer_loading.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   final Function(int)? onNavigateTab;
@@ -137,12 +138,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     widget.onNavigateTab?.call(2);
                   },
                 ),
-                loading: () => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
+                loading: () => const TodayMetricsShimmer(),
                 error: (error, stack) => const Center(
                   child: Padding(
                     padding: EdgeInsets.all(16),
@@ -345,12 +341,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     },
                   );
                 },
-                loading: () => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
+                loading: () => const RecentVisitorListShimmer(count: 3),
                 error: (error, stack) => Center(
                   child: Text('Error loading visitors: $error'),
                 ),

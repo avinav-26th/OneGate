@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/app_errors.dart';
 import '../../../../core/data/data_orchestrator.dart';
 import '../../../../core/utils/app_snackbar.dart';
 import '../../../../core/utils/validators.dart';
@@ -304,8 +305,8 @@ class _VisitorFormScreenState extends ConsumerState<VisitorFormScreen> {
       AppSnackBar.error(
         context,
         isEditing
-            ? 'Failed to update visitor record'
-            : 'Failed to register visitor',
+            ? AppErrors.updateFailed
+            : AppErrors.registrationFailed,
       );
     }
   }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_errors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_snackbar.dart';
+import '../../../../core/widgets/shimmer_loading.dart';
 import '../../domain/visitor.dart';
 import '../../domain/visitor_status.dart';
 import '../controllers/visitor_list_controller.dart';
@@ -23,6 +25,7 @@ class VisitorListScreen extends ConsumerStatefulWidget {
 class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
     with AutomaticKeepAliveClientMixin {
   late final TextEditingController _searchController;
+  late final ScrollController _scrollController;
 
   @override
   bool get wantKeepAlive => true;
@@ -33,11 +36,22 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
     _searchController = TextEditingController(
       text: ref.read(visitorSearchQueryProvider),
     );
+    _scrollController = ScrollController()..addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      if (ref.read(hasMoreVisitorsProvider)) {
+        ref.read(visitorListNotifierProvider.notifier).loadMore();
+      }
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -256,6 +270,7 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                       controller: _searchController,
                       onChanged: (val) {
                         ref.read(visitorSearchQueryProvider.notifier).state = val;
+                        ref.read(visitorDisplayLimitProvider.notifier).state = 15;
                       },
                       style: TextStyle(fontSize: 13, color: AppColors.textPrimaryOf(context)),
                       decoration: InputDecoration(
@@ -328,6 +343,7 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                     ref.read(selectedStatusFilterProvider.notifier).state = null;
                     ref.read(visitorQuickFilterProvider.notifier).state =
                         VisitorQuickFilter.all;
+                    ref.read(visitorDisplayLimitProvider.notifier).state = 15;
                   },
                 ),
                 const SizedBox(width: 6),
@@ -338,6 +354,7 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                   onSelected: (selected) {
                     ref.read(visitorQuickFilterProvider.notifier).state =
                         selected ? VisitorQuickFilter.totalToday : VisitorQuickFilter.all;
+                    ref.read(visitorDisplayLimitProvider.notifier).state = 15;
                   },
                 ),
                 const SizedBox(width: 6),
@@ -348,6 +365,7 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                   onSelected: (selected) {
                     ref.read(visitorQuickFilterProvider.notifier).state =
                         selected ? VisitorQuickFilter.currentlyIn : VisitorQuickFilter.all;
+                    ref.read(visitorDisplayLimitProvider.notifier).state = 15;
                   },
                 ),
                 const SizedBox(width: 6),
@@ -358,6 +376,7 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                   onSelected: (selected) {
                     ref.read(visitorQuickFilterProvider.notifier).state =
                         selected ? VisitorQuickFilter.checkedOutToday : VisitorQuickFilter.all;
+                    ref.read(visitorDisplayLimitProvider.notifier).state = 15;
                   },
                 ),
                 const SizedBox(width: 6),
@@ -370,6 +389,7 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                         onSelected: (selected) {
                           ref.read(selectedProjectFilterProvider.notifier).state =
                               selected ? proj : null;
+                          ref.read(visitorDisplayLimitProvider.notifier).state = 15;
                         },
                       ),
                     )),
@@ -382,6 +402,7 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                         onSelected: (selected) {
                           ref.read(selectedStatusFilterProvider.notifier).state =
                               selected ? status : null;
+                          ref.read(visitorDisplayLimitProvider.notifier).state = 15;
                         },
                       ),
                     )),
@@ -430,12 +451,22 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                   }
 
                   final sections = groupedMap.entries.toList();
+                  final hasMore = ref.watch(hasMoreVisitorsProvider);
 
                   return ListView.builder(
+                    controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.only(bottom: 140, top: 4),
-                    itemCount: sections.length,
+                    itemCount: sections.length + (hasMore ? 1 : 0),
                     itemBuilder: (context, sectionIndex) {
+                      if (sectionIndex >= sections.length) {
+                        return const ShimmerLoading(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 4),
+                            child: VisitorCardShimmer(),
+                          ),
+                        );
+                      }
                       final entry = sections[sectionIndex];
                       final sectionTitle = entry.key;
                       final visitors = entry.value;
@@ -486,11 +517,18 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                     },
                   );
                 },
-                loading: () => const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                loading: () => const VisitorListShimmer(),
                 error: (error, stack) => Center(
-                  child: Text('Error loading visitors: $error'),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      AppErrors.networkGeneral,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondaryOf(context),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

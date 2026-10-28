@@ -1,6 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:one_gate/core/constants/app_errors.dart';
 import 'package:one_gate/core/data/data_orchestrator.dart';
 import 'package:one_gate/core/utils/validators.dart';
+import 'package:one_gate/core/widgets/shimmer_loading.dart';
 import 'package:one_gate/features/visitors/domain/visit_session.dart';
 import 'package:one_gate/features/visitors/domain/visit_status_policy.dart';
 import 'package:one_gate/features/visitors/domain/visitor.dart';
@@ -126,6 +129,61 @@ void main() {
         checkInTime: DateTime.now(),
       );
       expect(activeSession.isCompleted, isFalse);
+    });
+  });
+
+  group('AppErrors Tests', () {
+    test('AppErrors constants are non-empty and well-defined', () {
+      expect(AppErrors.networkGeneral.isNotEmpty, isTrue);
+      expect(AppErrors.visitorNotFound.isNotEmpty, isTrue);
+      expect(AppErrors.nameRequired.isNotEmpty, isTrue);
+      expect(AppErrors.mobileRequired.isNotEmpty, isTrue);
+      expect(AppErrors.registrationFailed.isNotEmpty, isTrue);
+    });
+
+    test('Validators use AppErrors constants', () {
+      expect(Validators.validateName(''), equals(AppErrors.nameRequired));
+      expect(Validators.validateName('a'), equals(AppErrors.nameMinLength));
+      expect(Validators.validateMobile(''), equals(AppErrors.mobileRequired));
+      expect(Validators.validateMobile('123'), equals(AppErrors.mobileExactDigits));
+      expect(Validators.validateEmail('invalid'), equals(AppErrors.emailInvalid));
+    });
+  });
+
+  group('ShimmerLoading Widgets Tests', () {
+    testWidgets('TodayMetricsShimmer renders without errors', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: TodayMetricsShimmer(),
+          ),
+        ),
+      );
+      expect(find.byType(TodayMetricsShimmer), findsOneWidget);
+      expect(find.byType(ShimmerLoading), findsOneWidget);
+    });
+
+    testWidgets('RecentVisitorListShimmer renders without errors', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: RecentVisitorListShimmer(count: 2),
+          ),
+        ),
+      );
+      expect(find.byType(RecentVisitorListShimmer), findsOneWidget);
+      expect(find.byType(RecentVisitorTileShimmer), findsNWidgets(2));
+    });
+
+    testWidgets('VisitorListShimmer renders without errors', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: VisitorListShimmer(count: 3),
+          ),
+        ),
+      );
+      expect(find.byType(VisitorListShimmer), findsOneWidget);
     });
   });
 }

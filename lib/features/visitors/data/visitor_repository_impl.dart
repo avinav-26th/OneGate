@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/constants/app_errors.dart';
 import '../../../core/errors/failure.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../domain/visit_session.dart';
@@ -69,7 +70,6 @@ class VisitorRepositoryImpl implements VisitorRepository {
     final jsonString = prefs.getString(_storageKey);
     if (jsonString == null || jsonString.isEmpty) {
       final initial = _initialSeed();
-      await _writeLocal(initial);
       return initial;
     }
     try {
@@ -83,7 +83,6 @@ class VisitorRepositoryImpl implements VisitorRepository {
       }
     } catch (_) {}
     final fallback = _initialSeed();
-    await _writeLocal(fallback);
     return fallback;
   }
 
@@ -170,6 +169,22 @@ class VisitorRepositoryImpl implements VisitorRepository {
   @override
   Future<List<Visitor>> getVisitors({bool forceRefresh = false}) async {
     await autoPurgeExpiredRecycleBin();
+    final prefs = await SharedPreferences.getInstance();
+    final hasStored = prefs.containsKey(_storageKey);
+
+    if (!hasStored) {
+      try {
+        final remote = await apiService.getVisitors();
+        final remoteParsed = remote.map((i) => Visitor.fromJson(i)).toList();
+        await _writeLocal(remoteParsed);
+        return remoteParsed;
+      } catch (_) {
+        final initial = _initialSeed();
+        await _writeLocal(initial);
+        return initial;
+      }
+    }
+
     final localList = await _readLocal();
 
     if (forceRefresh) {
@@ -212,7 +227,7 @@ class VisitorRepositoryImpl implements VisitorRepository {
       await _writeLocal(localList);
       return visitor;
     } catch (_) {}
-    throw const Failure('Visitor record not found', statusCode: 404);
+    throw const Failure(AppErrors.visitorNotFound, statusCode: 404);
   }
 
   @override
@@ -220,10 +235,10 @@ class VisitorRepositoryImpl implements VisitorRepository {
     final opKey = 'create_${visitor.name.trim().toLowerCase()}_${visitor.mobile.trim()}';
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     if (_inFlightOperations.contains(opKey)) {
-      throw const Failure('Registration is already in progress');
+      throw const Failure(AppErrors.registrationInProgress);
     }
     if (_lastOperationTime.containsKey(opKey) && (nowMs - _lastOperationTime[opKey]!) < 1000) {
-      throw const Failure('Duplicate registration request prevented');
+      throw const Failure(AppErrors.duplicateRegistration);
     }
     _inFlightOperations.add(opKey);
     _lastOperationTime[opKey] = nowMs;

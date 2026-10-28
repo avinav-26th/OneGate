@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:light/light.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_errors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/app_snackbar.dart';
 import '../../visitors/presentation/controllers/visitor_providers.dart';
@@ -116,7 +117,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
       );
     } catch (_) {
       if (!mounted) return;
-      AppSnackBar.error(context, 'Visitor with ID "$id" not found in registry');
+      AppSnackBar.error(context, '${AppErrors.visitorNotFoundForId} ($id)');
     } finally {
       if (mounted) {
         _isProcessing.value = false;

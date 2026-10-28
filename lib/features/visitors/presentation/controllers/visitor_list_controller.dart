@@ -31,6 +31,7 @@ final selectedProjectFilterProvider = StateProvider<String?>((ref) => null);
 final selectedStatusFilterProvider = StateProvider<VisitorStatus?>((ref) => null);
 final visitorQuickFilterProvider = StateProvider<VisitorQuickFilter>((ref) => VisitorQuickFilter.all);
 final visitorSortOptionProvider = StateProvider<VisitorSortOption>((ref) => VisitorSortOption.newest);
+final visitorDisplayLimitProvider = StateProvider<int>((ref) => 15);
 
 class VisitorListNotifier extends StateNotifier<AsyncValue<List<Visitor>>> {
   final VisitorRepository _repository;
@@ -103,6 +104,10 @@ class VisitorListNotifier extends StateNotifier<AsyncValue<List<Visitor>>> {
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
+  }
+
+  void loadMore() {
+    _ref.read(visitorDisplayLimitProvider.notifier).state += 15;
   }
 
   void upsertVisitor(Visitor visitor) {
@@ -266,15 +271,26 @@ final filteredVisitorsProvider = Provider<AsyncValue<List<Visitor>>>((ref) {
   });
 });
 
+final hasMoreVisitorsProvider = Provider<bool>((ref) {
+  final filteredAsync = ref.watch(filteredVisitorsProvider);
+  final limit = ref.watch(visitorDisplayLimitProvider);
+  return filteredAsync.maybeWhen(
+    data: (list) => list.length > limit,
+    orElse: () => false,
+  );
+});
+
 final groupedVisitorsProvider = Provider<AsyncValue<Map<String, List<Visitor>>>>((ref) {
   final filteredAsync = ref.watch(filteredVisitorsProvider);
+  final limit = ref.watch(visitorDisplayLimitProvider);
   final sortOption = ref.watch(visitorSortOptionProvider);
 
   return filteredAsync.whenData((list) {
+    final paginated = list.take(limit).toList();
     final map = <String, List<Visitor>>{};
     final isNameSorted = sortOption == VisitorSortOption.nameAsc || sortOption == VisitorSortOption.nameDesc;
 
-    for (final v in list) {
+    for (final v in paginated) {
       final groupKey = isNameSorted
           ? (v.name.isNotEmpty ? v.name[0].toUpperCase() : '#')
           : DateFormatter.getDateGroup(v.createdAt);

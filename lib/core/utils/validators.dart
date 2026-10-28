@@ -1,24 +1,25 @@
 import 'package:flutter/services.dart';
+import '../constants/app_errors.dart';
 
 class Validators {
   static String? validateName(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Visitor name is required';
+      return AppErrors.nameRequired;
     }
     if (value.trim().length < 2) {
-      return 'Name must be at least 2 characters';
+      return AppErrors.nameMinLength;
     }
     return null;
   }
 
   static String? validateMobile(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Mobile number is required';
+      return AppErrors.mobileRequired;
     }
     final trimmed = value.trim();
     final regex = RegExp(r'^[0-9]{10}$');
     if (!regex.hasMatch(trimmed)) {
-      return 'Mobile number must be exactly 10 digits';
+      return AppErrors.mobileExactDigits;
     }
     return null;
   }
@@ -30,7 +31,7 @@ class Validators {
     final trimmed = value.trim();
     final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!regex.hasMatch(trimmed)) {
-      return 'Please enter a valid email address';
+      return AppErrors.emailInvalid;
     }
     return null;
   }
