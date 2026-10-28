@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/errors/failure.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../domain/visit_session.dart';
 import '../domain/visitor.dart';
 import '../domain/visitor_repository.dart';
 import '../domain/visitor_status.dart';
@@ -10,6 +11,11 @@ import 'visitor_api_service.dart';
 class VisitorRepositoryImpl implements VisitorRepository {
   final VisitorApiService apiService;
   static const String _storageKey = 'one_gate_persisted_visitors';
+  static const String _pendingQueueKey = 'one_gate_pending_sync_queue';
+
+  List<Visitor>? _memoryCache;
+  final Set<String> _inFlightOperations = {};
+  final Map<String, int> _lastOperationTime = {};
 
   VisitorRepositoryImpl({required this.apiService});
 
@@ -55,125 +61,328 @@ class VisitorRepositoryImpl implements VisitorRepository {
     ];
   }
 
-  Future<List<Visitor>> _loadLocalVisitors() async {
+  Future<List<Visitor>> _readLocal() async {
+    if (_memoryCache != null) {
+      return List<Visitor>.from(_memoryCache!);
+    }
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_storageKey);
     if (jsonString == null || jsonString.isEmpty) {
       final initial = _initialSeed();
-      await _saveLocalVisitors(initial);
+      await _writeLocal(initial);
       return initial;
     }
     try {
       final decoded = json.decode(jsonString);
       if (decoded is List) {
-        return decoded
+        final parsed = decoded
             .map((item) => Visitor.fromJson(item as Map<String, dynamic>))
             .toList();
+        _memoryCache = parsed;
+        return List<Visitor>.from(parsed);
       }
     } catch (_) {}
-    return _initialSeed();
+    final fallback = _initialSeed();
+    await _writeLocal(fallback);
+    return fallback;
   }
 
-  Future<void> _saveLocalVisitors(List<Visitor> visitors) async {
+  Future<void> _writeLocal(List<Visitor> visitors) async {
+    _memoryCache = List<Visitor>.from(visitors);
     final prefs = await SharedPreferences.getInstance();
     final raw = visitors.map((v) => v.toJson()).toList();
     await prefs.setString(_storageKey, json.encode(raw));
   }
 
-  @override
-  Future<List<Visitor>> getVisitors() async {
+  Future<List<Map<String, dynamic>>> _readPendingQueue() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_pendingQueueKey);
+    if (raw == null || raw.isEmpty) return [];
     try {
-      final remoteList = await apiService.getVisitors();
-      if (remoteList.isNotEmpty) {
-        final visitors = remoteList.map((item) => Visitor.fromJson(item)).toList();
-        await _saveLocalVisitors(visitors);
-        return visitors;
+      final decoded = json.decode(raw);
+      if (decoded is List) {
+        return decoded.cast<Map<String, dynamic>>();
       }
     } catch (_) {}
+    return [];
+  }
 
-    return await _loadLocalVisitors();
+  Future<void> _enqueuePendingMutation(Map<String, dynamic> mutation) async {
+    final list = await _readPendingQueue();
+    list.add(mutation);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_pendingQueueKey, json.encode(list));
+  }
+
+  Future<void> _clearPendingQueue() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_pendingQueueKey);
+  }
+
+  @override
+  Future<void> autoPurgeExpiredRecycleBin([Duration retention = const Duration(days: 30)]) async {
+    final all = await _readLocal();
+    final cutoff = DateTime.now().subtract(retention);
+    final remaining = all.where((v) {
+      if (!v.isDeleted) return true;
+      if (v.deletedAt == null) return true;
+      return v.deletedAt!.isAfter(cutoff);
+    }).toList();
+    if (remaining.length != all.length) {
+      await _writeLocal(remaining);
+    }
+  }
+
+  @override
+  Future<void> syncPendingMutations() async {
+    final queue = await _readPendingQueue();
+    if (queue.isEmpty) return;
+    final remaining = <Map<String, dynamic>>[];
+    for (final task in queue) {
+      try {
+        final action = task['action']?.toString();
+        final id = task['id']?.toString() ?? '';
+        final payload = task['data'] is Map<String, dynamic>
+            ? task['data'] as Map<String, dynamic>
+            : <String, dynamic>{};
+
+        if (action == 'create') {
+          await apiService.createVisitor(payload);
+        } else if (action == 'update') {
+          await apiService.updateVisitor(id, payload);
+        } else if (action == 'delete') {
+          await apiService.deleteVisitor(id);
+        } else if (action == 'status') {
+          await apiService.patchVisitor(id, payload);
+        }
+      } catch (_) {
+        remaining.add(task);
+      }
+    }
+    final prefs = await SharedPreferences.getInstance();
+    if (remaining.isEmpty) {
+      await _clearPendingQueue();
+    } else {
+      await prefs.setString(_pendingQueueKey, json.encode(remaining));
+    }
+  }
+
+  @override
+  Future<List<Visitor>> getVisitors({bool forceRefresh = false}) async {
+    await autoPurgeExpiredRecycleBin();
+    final localList = await _readLocal();
+
+    if (forceRefresh) {
+      try {
+        await syncPendingMutations();
+        final remote = await apiService.getVisitors();
+        final remoteParsed = remote.map((i) => Visitor.fromJson(i)).toList();
+        final localDeleted = localList.where((v) => v.isDeleted).toList();
+        final merged = [...remoteParsed, ...localDeleted]
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        await _writeLocal(merged);
+        return remoteParsed;
+      } catch (_) {}
+    }
+
+    return localList.where((v) => !v.isDeleted).toList();
+  }
+
+  @override
+  Future<List<Visitor>> getRecycleBinVisitors() async {
+    final localList = await _readLocal();
+    return localList.where((v) => v.isDeleted).toList()
+      ..sort((a, b) => (b.deletedAt ?? b.createdAt).compareTo(a.deletedAt ?? a.createdAt));
   }
 
   @override
   Future<Visitor> getVisitorById(String id) async {
+    final localList = await _readLocal();
+    final normalized = id.trim().toLowerCase();
+    final match = localList.where((v) =>
+        v.id.toLowerCase() == normalized ||
+        v.passCode.toLowerCase() == normalized);
+    if (match.isNotEmpty) {
+      return match.first;
+    }
     try {
-      final remoteMap = await apiService.getVisitor(id);
-      final visitor = Visitor.fromJson(remoteMap);
+      final remote = await apiService.getVisitor(id);
+      final visitor = Visitor.fromJson(remote);
+      localList.insert(0, visitor);
+      await _writeLocal(localList);
       return visitor;
     } catch (_) {}
-
-    final localList = await _loadLocalVisitors();
-    final found = localList.where((v) => v.id.toLowerCase() == id.trim().toLowerCase());
-    if (found.isNotEmpty) {
-      return found.first;
-    }
     throw const Failure('Visitor record not found', statusCode: 404);
   }
 
   @override
   Future<Visitor> createVisitor(Visitor visitor) async {
-    Visitor created;
-    try {
-      final remote = await apiService.createVisitor(visitor.toJson(includeId: false));
-      created = Visitor.fromJson(remote);
-    } catch (_) {
-      final generatedId = 'VIS${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-      created = visitor.copyWith(id: generatedId);
+    final opKey = 'create_${visitor.name.trim().toLowerCase()}_${visitor.mobile.trim()}';
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    if (_inFlightOperations.contains(opKey)) {
+      throw const Failure('Registration is already in progress');
     }
+    if (_lastOperationTime.containsKey(opKey) && (nowMs - _lastOperationTime[opKey]!) < 1000) {
+      throw const Failure('Duplicate registration request prevented');
+    }
+    _inFlightOperations.add(opKey);
+    _lastOperationTime[opKey] = nowMs;
+    try {
+      Visitor created;
+      try {
+        final remote = await apiService.createVisitor(visitor.toJson(includeId: false));
+        created = Visitor.fromJson(remote);
+      } catch (_) {
+        final generatedId = 'VIS${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+        created = visitor.copyWith(id: generatedId);
+        await _enqueuePendingMutation({
+          'action': 'create',
+          'id': created.id,
+          'data': created.toJson(includeId: false),
+        });
+      }
 
-    final localList = await _loadLocalVisitors();
-    localList.insert(0, created);
-    await _saveLocalVisitors(localList);
-    return created;
+      final localList = await _readLocal();
+      localList.insert(0, created);
+      await _writeLocal(localList);
+      return created;
+    } finally {
+      _inFlightOperations.remove(opKey);
+    }
   }
 
   @override
   Future<Visitor> updateVisitor(Visitor visitor) async {
-    Visitor updated;
+    Visitor updated = visitor;
     try {
       final remote = await apiService.updateVisitor(visitor.id, visitor.toJson());
       updated = Visitor.fromJson(remote);
     } catch (_) {
-      updated = visitor;
+      await _enqueuePendingMutation({
+        'action': 'update',
+        'id': visitor.id,
+        'data': visitor.toJson(),
+      });
     }
 
-    final localList = await _loadLocalVisitors();
-    final index = localList.indexWhere((v) => v.id == visitor.id);
-    if (index != -1) {
-      localList[index] = updated;
-      await _saveLocalVisitors(localList);
+    final localList = await _readLocal();
+    final idx = localList.indexWhere((v) => v.id == visitor.id);
+    if (idx != -1) {
+      localList[idx] = updated;
+      await _writeLocal(localList);
     }
     return updated;
   }
 
   @override
-  Future<void> deleteVisitor(String id) async {
+  Future<void> softDeleteVisitor(String id) async {
+    final localList = await _readLocal();
+    final idx = localList.indexWhere((v) => v.id.trim().toLowerCase() == id.trim().toLowerCase());
+    if (idx != -1) {
+      final updated = localList[idx].copyWith(
+        isDeleted: true,
+        deletedAt: DateTime.now(),
+      );
+      localList[idx] = updated;
+      await _writeLocal(localList);
+    }
+  }
+
+  @override
+  Future<void> deleteVisitor(String id) => softDeleteVisitor(id);
+
+  @override
+  Future<void> restoreVisitor(String id) async {
+    final localList = await _readLocal();
+    final idx = localList.indexWhere((v) => v.id.trim().toLowerCase() == id.trim().toLowerCase());
+    if (idx != -1) {
+      final updated = localList[idx].copyWith(
+        isDeleted: false,
+        clearDeletedAt: true,
+      );
+      localList[idx] = updated;
+      await _writeLocal(localList);
+    }
+  }
+
+  @override
+  Future<void> hardDeleteVisitor(String id) async {
     try {
       await apiService.deleteVisitor(id);
-    } catch (_) {}
+    } catch (_) {
+      await _enqueuePendingMutation({
+        'action': 'delete',
+        'id': id,
+        'data': <String, dynamic>{},
+      });
+    }
 
-    final localList = await _loadLocalVisitors();
-    localList.removeWhere((v) => v.id == id);
-    await _saveLocalVisitors(localList);
+    final localList = await _readLocal();
+    localList.removeWhere((v) => v.id.trim().toLowerCase() == id.trim().toLowerCase());
+    await _writeLocal(localList);
+  }
+
+  @override
+  Future<void> emptyRecycleBin() async {
+    final localList = await _readLocal();
+    final deletedIds = localList.where((v) => v.isDeleted).map((v) => v.id).toList();
+    localList.removeWhere((v) => v.isDeleted);
+    await _writeLocal(localList);
+
+    for (final id in deletedIds) {
+      try {
+        await apiService.deleteVisitor(id);
+      } catch (_) {
+        await _enqueuePendingMutation({
+          'action': 'delete',
+          'id': id,
+          'data': <String, dynamic>{},
+        });
+      }
+    }
   }
 
   @override
   Future<Visitor> updateStatus(String id, VisitorStatus newStatus, DateTime timestamp) async {
-    final current = await getVisitorById(id);
-    Visitor updated;
-    if (newStatus == VisitorStatus.checkedIn) {
-      updated = current.copyWith(
-        status: newStatus,
-        checkInTime: timestamp,
-      );
-    } else {
-      updated = current.copyWith(
-        status: newStatus,
-        checkOutTime: timestamp,
-      );
+    final opKey = 'status_${id.trim().toLowerCase()}_${newStatus.name}';
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    if (_inFlightOperations.contains(opKey)) {
+      return getVisitorById(id);
     }
-
+    if (_lastOperationTime.containsKey(opKey) && (nowMs - _lastOperationTime[opKey]!) < 1000) {
+      return getVisitorById(id);
+    }
+    _inFlightOperations.add(opKey);
+    _lastOperationTime[opKey] = nowMs;
     try {
+      final current = await getVisitorById(id);
+      final history = List<VisitSession>.from(current.visitHistory);
+
+      if (newStatus == VisitorStatus.checkedIn) {
+        history.add(VisitSession(
+          id: 'SES-${history.length + 1}',
+          checkInTime: timestamp,
+          purpose: current.purpose,
+          gateOrProject: current.project,
+        ));
+      } else if (newStatus == VisitorStatus.checkedOut) {
+        if (history.isNotEmpty && history.last.checkOutTime == null) {
+          history[history.length - 1] = history.last.copyWith(checkOutTime: timestamp);
+        } else {
+          history.add(VisitSession(
+            id: 'SES-${history.length + 1}',
+            checkInTime: current.checkInTime ?? timestamp,
+            checkOutTime: timestamp,
+            purpose: current.purpose,
+            gateOrProject: current.project,
+          ));
+        }
+      }
+
+      final updated = newStatus == VisitorStatus.checkedIn
+          ? current.copyWith(status: newStatus, checkInTime: timestamp, visitHistory: history)
+          : current.copyWith(status: newStatus, checkOutTime: timestamp, visitHistory: history);
+
       final patchData = {
         'status': newStatus.toApiString(),
         if (newStatus == VisitorStatus.checkedIn)
@@ -181,16 +390,33 @@ class VisitorRepositoryImpl implements VisitorRepository {
         else
           'check_out_time': DateFormatter.toIso(timestamp),
       };
-      final remote = await apiService.patchVisitor(id, patchData);
-      updated = Visitor.fromJson(remote);
-    } catch (_) {}
 
-    final localList = await _loadLocalVisitors();
-    final index = localList.indexWhere((v) => v.id == id);
-    if (index != -1) {
-      localList[index] = updated;
-      await _saveLocalVisitors(localList);
+      try {
+        final remote = await apiService.patchVisitor(id, patchData);
+        final remoteUpdated = Visitor.fromJson(remote).copyWith(visitHistory: history);
+        final localList = await _readLocal();
+        final idx = localList.indexWhere((v) => v.id == id);
+        if (idx != -1) {
+          localList[idx] = remoteUpdated;
+          await _writeLocal(localList);
+        }
+        return remoteUpdated;
+      } catch (_) {
+        await _enqueuePendingMutation({
+          'action': 'status',
+          'id': id,
+          'data': patchData,
+        });
+        final localList = await _readLocal();
+        final idx = localList.indexWhere((v) => v.id == id);
+        if (idx != -1) {
+          localList[idx] = updated;
+          await _writeLocal(localList);
+        }
+        return updated;
+      }
+    } finally {
+      _inFlightOperations.remove(opKey);
     }
-    return updated;
   }
 }

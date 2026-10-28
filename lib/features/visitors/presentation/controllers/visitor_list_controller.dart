@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/data/data_orchestrator.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../domain/visitor.dart';
 import '../../domain/visitor_repository.dart';
@@ -15,43 +16,90 @@ enum VisitorQuickFilter {
   const VisitorQuickFilter(this.label);
 }
 
+enum VisitorSortOption {
+  newest('Newest First'),
+  oldest('Oldest First'),
+  nameAsc('Name (A to Z)'),
+  nameDesc('Name (Z to A)');
+
+  final String label;
+  const VisitorSortOption(this.label);
+}
+
 final visitorSearchQueryProvider = StateProvider<String>((ref) => '');
 final selectedProjectFilterProvider = StateProvider<String?>((ref) => null);
 final selectedStatusFilterProvider = StateProvider<VisitorStatus?>((ref) => null);
 final visitorQuickFilterProvider = StateProvider<VisitorQuickFilter>((ref) => VisitorQuickFilter.all);
+final visitorSortOptionProvider = StateProvider<VisitorSortOption>((ref) => VisitorSortOption.newest);
 
 class VisitorListNotifier extends StateNotifier<AsyncValue<List<Visitor>>> {
   final VisitorRepository _repository;
+  final Ref _ref;
 
-  VisitorListNotifier(this._repository) : super(const AsyncValue.loading()) {
+  VisitorListNotifier(this._repository, this._ref) : super(const AsyncValue.loading()) {
     loadVisitors();
   }
 
   Future<void> loadVisitors() async {
-    state = const AsyncValue.loading();
     try {
-      final visitors = await _repository.getVisitors();
-      state = AsyncValue.data(visitors);
+      final cached = await _repository.getVisitors(forceRefresh: false);
+      state = AsyncValue.data(cached);
+      _silentSync();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
+  }
+
+  Future<void> _silentSync() async {
+    try {
+      final fresh = await _repository.getVisitors(forceRefresh: true);
+      state = AsyncValue.data(fresh);
+    } catch (_) {}
   }
 
   Future<void> refresh() async {
     try {
-      final visitors = await _repository.getVisitors();
+      final visitors = await _repository.getVisitors(forceRefresh: true);
       state = AsyncValue.data(visitors);
+      _ref.read(recycleBinProvider.notifier).loadBin();
+    } catch (_) {
+      final fallback = await _repository.getVisitors(forceRefresh: false);
+      state = AsyncValue.data(fallback);
+    }
+  }
+
+  Future<void> softDeleteVisitor(String id) async {
+    try {
+      await _repository.softDeleteVisitor(id);
+      state.whenData((list) {
+        state = AsyncValue.data(list.where((v) => v.id.trim().toLowerCase() != id.trim().toLowerCase()).toList());
+      });
+      _ref.read(recycleBinProvider.notifier).loadBin();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
   }
 
-  Future<void> deleteVisitor(String id) async {
+  Future<void> deleteVisitor(String id) => softDeleteVisitor(id);
+
+  Future<void> restoreVisitor(String id) async {
     try {
-      await _repository.deleteVisitor(id);
+      await _repository.restoreVisitor(id);
+      final list = await _repository.getVisitors(forceRefresh: false);
+      state = AsyncValue.data(list);
+      _ref.read(recycleBinProvider.notifier).loadBin();
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> hardDeleteVisitor(String id) async {
+    try {
+      await _repository.hardDeleteVisitor(id);
       state.whenData((list) {
-        state = AsyncValue.data(list.where((v) => v.id != id).toList());
+        state = AsyncValue.data(list.where((v) => v.id.trim().toLowerCase() != id.trim().toLowerCase()).toList());
       });
+      _ref.read(recycleBinProvider.notifier).loadBin();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -74,7 +122,89 @@ class VisitorListNotifier extends StateNotifier<AsyncValue<List<Visitor>>> {
 final visitorListNotifierProvider =
     StateNotifierProvider<VisitorListNotifier, AsyncValue<List<Visitor>>>((ref) {
   final repository = ref.watch(visitorRepositoryProvider);
-  return VisitorListNotifier(repository);
+  return VisitorListNotifier(repository, ref);
+});
+
+class RecycleBinNotifier extends StateNotifier<AsyncValue<List<Visitor>>> {
+  final VisitorRepository _repository;
+
+  RecycleBinNotifier(this._repository) : super(const AsyncValue.loading()) {
+    loadBin();
+  }
+
+  Future<void> loadBin() async {
+    state = const AsyncValue.loading();
+    try {
+      final items = await _repository.getRecycleBinVisitors();
+      state = AsyncValue.data(items);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> restore(String id) async {
+    try {
+      await _repository.restoreVisitor(id);
+      final remaining = await _repository.getRecycleBinVisitors();
+      state = AsyncValue.data(remaining);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> deletePermanently(String id) async {
+    try {
+      await _repository.hardDeleteVisitor(id);
+      final remaining = await _repository.getRecycleBinVisitors();
+      state = AsyncValue.data(remaining);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> emptyBin() async {
+    try {
+      await _repository.emptyRecycleBin();
+      state = const AsyncValue.data([]);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+}
+
+final recycleBinProvider =
+    StateNotifierProvider<RecycleBinNotifier, AsyncValue<List<Visitor>>>((ref) {
+  final repository = ref.watch(visitorRepositoryProvider);
+  return RecycleBinNotifier(repository);
+});
+
+final availableProjectsProvider = Provider<List<String>>((ref) {
+  final visitorsAsync = ref.watch(visitorListNotifierProvider);
+  final defaults = ['Project A', 'Project B', 'Project C'];
+  final set = Set<String>.from(defaults);
+  visitorsAsync.whenData((list) {
+    for (final v in list) {
+      if (v.project.trim().isNotEmpty) {
+        set.add(v.project.trim());
+      }
+    }
+  });
+  final sorted = set.toList()..sort();
+  return sorted;
+});
+
+final filterCountsProvider = Provider<ComputedTierMetrics>((ref) {
+  final visitorsAsync = ref.watch(visitorListNotifierProvider);
+  return visitorsAsync.maybeWhen(
+    data: (visitors) => ComputedTierMetrics.fromVisitors(visitors),
+    orElse: () => const ComputedTierMetrics(
+      totalCount: 0,
+      totalToday: 0,
+      currentlyIn: 0,
+      checkedOutToday: 0,
+      recycleBinCount: 0,
+    ),
+  );
 });
 
 final recentVisitorsProvider = Provider<AsyncValue<List<Visitor>>>((ref) {
@@ -96,9 +226,10 @@ final filteredVisitorsProvider = Provider<AsyncValue<List<Visitor>>>((ref) {
   final projectFilter = ref.watch(selectedProjectFilterProvider);
   final statusFilter = ref.watch(selectedStatusFilterProvider);
   final quickFilter = ref.watch(visitorQuickFilterProvider);
+  final sortOption = ref.watch(visitorSortOptionProvider);
 
   return visitorsAsync.whenData((visitors) {
-    return visitors.where((visitor) {
+    final filtered = visitors.where((visitor) {
       final matchesSearch = searchQuery.isEmpty ||
           visitor.name.toLowerCase().contains(searchQuery) ||
           visitor.mobile.contains(searchQuery);
@@ -117,5 +248,38 @@ final filteredVisitorsProvider = Provider<AsyncValue<List<Visitor>>>((ref) {
 
       return matchesSearch && matchesProject && matchesStatus && matchesQuickFilter;
     }).toList();
+
+    filtered.sort((a, b) {
+      switch (sortOption) {
+        case VisitorSortOption.newest:
+          return b.createdAt.compareTo(a.createdAt);
+        case VisitorSortOption.oldest:
+          return a.createdAt.compareTo(b.createdAt);
+        case VisitorSortOption.nameAsc:
+          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        case VisitorSortOption.nameDesc:
+          return b.name.toLowerCase().compareTo(a.name.toLowerCase());
+      }
+    });
+
+    return filtered;
+  });
+});
+
+final groupedVisitorsProvider = Provider<AsyncValue<Map<String, List<Visitor>>>>((ref) {
+  final filteredAsync = ref.watch(filteredVisitorsProvider);
+  final sortOption = ref.watch(visitorSortOptionProvider);
+
+  return filteredAsync.whenData((list) {
+    final map = <String, List<Visitor>>{};
+    final isNameSorted = sortOption == VisitorSortOption.nameAsc || sortOption == VisitorSortOption.nameDesc;
+
+    for (final v in list) {
+      final groupKey = isNameSorted
+          ? (v.name.isNotEmpty ? v.name[0].toUpperCase() : '#')
+          : DateFormatter.getDateGroup(v.createdAt);
+      map.putIfAbsent(groupKey, () => []).add(v);
+    }
+    return map;
   });
 });

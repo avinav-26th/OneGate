@@ -9,6 +9,7 @@ import 'visitor_providers.dart';
 class VisitorDetailsNotifier extends StateNotifier<AsyncValue<Visitor?>> {
   final VisitorRepository _repository;
   final Ref _ref;
+  final Set<String> _pendingActions = {};
 
   VisitorDetailsNotifier(this._repository, this._ref) : super(const AsyncValue.data(null));
 
@@ -29,10 +30,15 @@ class VisitorDetailsNotifier extends StateNotifier<AsyncValue<Visitor?>> {
   }
 
   Future<bool> checkIn(String id) async {
+    final key = 'checkIn_$id';
+    if (_pendingActions.contains(key) || state.isLoading) {
+      return false;
+    }
     final current = state.value;
     if (current == null || !VisitStatusPolicy.canCheckIn(current.status)) {
       return false;
     }
+    _pendingActions.add(key);
     state = const AsyncValue.loading();
     try {
       final updated = await _repository.updateStatus(
@@ -46,14 +52,21 @@ class VisitorDetailsNotifier extends StateNotifier<AsyncValue<Visitor?>> {
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       return false;
+    } finally {
+      _pendingActions.remove(key);
     }
   }
 
   Future<bool> checkOut(String id) async {
+    final key = 'checkOut_$id';
+    if (_pendingActions.contains(key) || state.isLoading) {
+      return false;
+    }
     final current = state.value;
     if (current == null || !VisitStatusPolicy.canCheckOut(current.status)) {
       return false;
     }
+    _pendingActions.add(key);
     state = const AsyncValue.loading();
     try {
       final updated = await _repository.updateStatus(
@@ -67,10 +80,17 @@ class VisitorDetailsNotifier extends StateNotifier<AsyncValue<Visitor?>> {
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       return false;
+    } finally {
+      _pendingActions.remove(key);
     }
   }
 
   Future<bool> delete(String id) async {
+    final key = 'delete_$id';
+    if (_pendingActions.contains(key) || state.isLoading) {
+      return false;
+    }
+    _pendingActions.add(key);
     state = const AsyncValue.loading();
     try {
       await _repository.deleteVisitor(id);
@@ -80,6 +100,8 @@ class VisitorDetailsNotifier extends StateNotifier<AsyncValue<Visitor?>> {
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       return false;
+    } finally {
+      _pendingActions.remove(key);
     }
   }
 }

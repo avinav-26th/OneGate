@@ -3,11 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:light/light.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/app_snackbar.dart';
 import '../../visitors/presentation/controllers/visitor_providers.dart';
 import '../../visitors/presentation/screens/visitor_details_screen.dart';
 
 class QrScannerScreen extends ConsumerStatefulWidget {
-  const QrScannerScreen({super.key});
+  final bool isActive;
+
+  const QrScannerScreen({super.key, this.isActive = true});
 
   @override
   ConsumerState<QrScannerScreen> createState() => _QrScannerScreenState();
@@ -23,7 +28,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
   @override
   bool get wantKeepAlive => true;
 
-  bool _isProcessing = false;
+  final ValueNotifier<bool> _isProcessing = ValueNotifier<bool>(false);
   final TextEditingController _manualIdController = TextEditingController();
   StreamSubscription<int>? _lightSubscription;
   bool _autoTorchActive = false;
@@ -34,10 +39,30 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     _initLightSensor();
   }
 
+  @override
+  void didUpdateWidget(covariant QrScannerScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive != widget.isActive) {
+      if (widget.isActive) {
+        _scannerController.start();
+      } else {
+        _scannerController.stop();
+        _turnOffTorch();
+      }
+    }
+  }
+
+  void _turnOffTorch() {
+    _autoTorchActive = false;
+    if (_scannerController.value.torchState == TorchState.on) {
+      _scannerController.toggleTorch();
+    }
+  }
+
   void _initLightSensor() {
     try {
       _lightSubscription = Light().lightSensorStream.listen((lux) {
-        if (!mounted) return;
+        if (!mounted || !widget.isActive) return;
         if (lux >= 0 && lux < 15 && !_autoTorchActive) {
           if (_scannerController.value.torchState == TorchState.off) {
             _autoTorchActive = true;
@@ -58,16 +83,17 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     _lightSubscription?.cancel();
     _scannerController.dispose();
     _manualIdController.dispose();
+    _isProcessing.dispose();
     super.dispose();
   }
 
   Future<void> _handleBarcode(String rawValue) async {
-    if (_isProcessing) return;
+    if (_isProcessing.value) return;
 
     final id = rawValue.trim();
     if (id.isEmpty) return;
 
-    setState(() => _isProcessing = true);
+    _isProcessing.value = true;
     await _scannerController.stop();
 
     try {
@@ -83,26 +109,22 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
       );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Visitor with ID "$id" not found in registry'),
-          backgroundColor: const Color(0xFFDC2626),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      AppSnackBar.error(context, 'Visitor with ID "$id" not found in registry');
     } finally {
       if (mounted) {
-        setState(() => _isProcessing = false);
+        _isProcessing.value = false;
         _scannerController.start();
       }
     }
   }
 
   void _showManualLookupDialog() {
+    final isDark = AppColors.isDark(context);
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surfaceOf(context),
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
@@ -110,12 +132,12 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
         titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         actionsPadding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-        title: const Text(
+        title: Text(
           'Manual Pass Lookup',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF142B3B),
+            color: AppColors.textPrimaryOf(context),
             letterSpacing: -0.3,
           ),
         ),
@@ -123,11 +145,11 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Enter the visitor pass identifier to verify access details.',
               style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF64748B),
+                color: AppColors.textSecondaryOf(context),
                 height: 1.4,
               ),
             ),
@@ -136,29 +158,31 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               controller: _manualIdController,
               autofocus: true,
               textCapitalization: TextCapitalization.characters,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF142B3B),
+                color: AppColors.textPrimaryOf(context),
               ),
               decoration: InputDecoration(
                 labelText: 'Visitor Pass ID',
+                labelStyle: TextStyle(color: AppColors.textSecondaryOf(context)),
                 hintText: 'e.g. VIS001',
-                prefixIcon: const Icon(Icons.badge_outlined, color: Color(0xFF142B3B)),
+                hintStyle: TextStyle(color: AppColors.textSecondaryOf(context)),
+                prefixIcon: Icon(Icons.badge_outlined, color: AppColors.textPrimaryOf(context)),
                 filled: true,
-                fillColor: const Color(0xFFF8FAFC),
+                fillColor: AppColors.chipOf(context),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                  borderSide: BorderSide(color: AppColors.borderOf(context)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  borderSide: BorderSide(color: AppColors.borderOf(context)),
                 ),
                 focusedBorder: const OutlineInputBorder(
                   borderRadius: BorderRadius.all(Radius.circular(14)),
-                  borderSide: BorderSide(color: Color(0xFF38DCC0), width: 2),
+                  borderSide: BorderSide(color: AppColors.mintTeal, width: 2),
                 ),
               ),
               onSubmitted: (_) {
@@ -176,7 +200,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF64748B),
+              foregroundColor: AppColors.textSecondaryOf(context),
               textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
             ),
             child: const Text('Cancel'),
@@ -191,8 +215,8 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF142B3B),
-              foregroundColor: Colors.white,
+              backgroundColor: isDark ? AppColors.mintTeal : AppColors.navy,
+              foregroundColor: isDark ? AppColors.darkBackground : Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -213,12 +237,19 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
+      backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        backgroundColor: const Color(0xFFF4F7F8),
-        title: const Text('Scan Gate Pass'),
+        backgroundColor: AppColors.backgroundOf(context),
+        title: Text(
+          'Scan Gate Pass',
+          style: TextStyle(
+            color: AppColors.textPrimaryOf(context),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         actions: [
           ValueListenableBuilder<MobileScannerState>(
             valueListenable: _scannerController,
@@ -227,7 +258,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               return IconButton(
                 icon: Icon(
                   isTorchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
-                  color: isTorchOn ? const Color(0xFF38DCC0) : const Color(0xFF142B3B),
+                  color: isTorchOn ? AppColors.mintTeal : AppColors.textPrimaryOf(context),
                 ),
                 onPressed: () {
                   _autoTorchActive = false;
@@ -237,7 +268,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
             },
           ),
           IconButton(
-            icon: const Icon(Icons.flip_camera_ios_rounded, color: Color(0xFF142B3B)),
+            icon: Icon(Icons.flip_camera_ios_rounded, color: AppColors.textPrimaryOf(context)),
             onPressed: () => _scannerController.switchCamera(),
           ),
         ],
@@ -265,15 +296,15 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                     children: [
                       const Icon(Icons.camera_alt_outlined, size: 56, color: Color(0xFFDC2626)),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'Camera Access Denied or Unavailable',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimaryOf(context)),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Please grant camera permissions or use manual pass lookup.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                        style: TextStyle(color: AppColors.textSecondaryOf(context), fontSize: 13),
                       ),
                       const SizedBox(height: 20),
                       ElevatedButton.icon(
@@ -287,16 +318,19 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               );
             },
           ),
-          Container(
-            width: 250,
-            height: 250,
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFF38DCC0), width: 2.5),
-              borderRadius: BorderRadius.circular(20),
+          Transform.translate(
+            offset: const Offset(0, -65),
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.mintTeal, width: 2.8),
+                borderRadius: BorderRadius.circular(24),
+              ),
             ),
           ),
           Positioned(
-            bottom: 36,
+            bottom: 96,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -307,7 +341,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
-                    'Align visitor QR code within the frame',
+                    AppStrings.alignQr,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 13,
@@ -318,18 +352,18 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
                 const SizedBox(height: 14),
                 ElevatedButton.icon(
                   onPressed: _showManualLookupDialog,
-                  icon: const Icon(Icons.keyboard_alt_outlined, size: 18, color: Color(0xFF142B3B)),
-                  label: const Text(
-                    'Manual Entry',
+                  icon: Icon(Icons.keyboard_alt_outlined, size: 18, color: AppColors.textPrimaryOf(context)),
+                  label: Text(
+                    AppStrings.manualEntry,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF142B3B),
+                      color: AppColors.textPrimaryOf(context),
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF142B3B),
+                    backgroundColor: AppColors.surfaceOf(context),
+                    foregroundColor: AppColors.textPrimaryOf(context),
                     elevation: 4,
                     shadowColor: Colors.black38,
                     shape: const StadiumBorder(),
@@ -339,13 +373,18 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
               ],
             ),
           ),
-          if (_isProcessing)
-            Container(
-              color: Colors.black45,
-              child: const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              ),
-            ),
+          ValueListenableBuilder<bool>(
+            valueListenable: _isProcessing,
+            builder: (context, processing, _) {
+              if (!processing) return const SizedBox.shrink();
+              return Container(
+                color: Colors.black45,
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

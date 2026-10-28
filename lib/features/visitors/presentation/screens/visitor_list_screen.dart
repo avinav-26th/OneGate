@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
+import '../../../../core/utils/app_snackbar.dart';
 import '../../domain/visitor.dart';
 import '../../domain/visitor_status.dart';
 import '../controllers/visitor_list_controller.dart';
 import '../widgets/delete_dialog.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/visitor_card.dart';
+import 'recycle_bin_screen.dart';
 import 'visitor_details_screen.dart';
 import 'visitor_form_screen.dart';
 
@@ -61,12 +64,17 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
       onConfirm: () async {
         await ref
             .read(visitorListNotifierProvider.notifier)
-            .deleteVisitor(visitor.id);
+            .softDeleteVisitor(visitor.id);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Visitor record deleted'),
-              behavior: SnackBarBehavior.floating,
+          AppSnackBar.info(
+            context,
+            'Moved ${visitor.name} to Recycle Bin',
+            action: SnackBarAction(
+              label: 'Undo',
+              textColor: AppColors.mintTeal,
+              onPressed: () {
+                ref.read(visitorListNotifierProvider.notifier).restoreVisitor(visitor.id);
+              },
             ),
           );
         }
@@ -74,56 +82,152 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
     );
   }
 
+  void _showSortOptions() {
+    final currentSort = ref.read(visitorSortOptionProvider);
+    final isDark = AppColors.isDark(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surfaceOf(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.borderOf(context),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(
+                  'Sort Visitors',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimaryOf(context),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...VisitorSortOption.values.map((opt) {
+                  final isSelected = opt == currentSort;
+                  return ListTile(
+                    visualDensity: VisualDensity.compact,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                    dense: true,
+                    title: Text(
+                      opt.label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected
+                            ? (isDark ? AppColors.mintTeal : AppColors.navy)
+                            : AppColors.textSecondaryOf(context),
+                      ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(Icons.check_circle_rounded, color: AppColors.mintTeal, size: 20)
+                        : null,
+                    onTap: () {
+                      ref.read(visitorSortOptionProvider.notifier).state = opt;
+                      Navigator.of(ctx).pop();
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final visitorsAsync = ref.watch(filteredVisitorsProvider);
+    final isDark = AppColors.isDark(context);
+    final groupedAsync = ref.watch(groupedVisitorsProvider);
     final selectedProject = ref.watch(selectedProjectFilterProvider);
     final selectedStatus = ref.watch(selectedStatusFilterProvider);
     final quickFilter = ref.watch(visitorQuickFilterProvider);
+    final filterCounts = ref.watch(filterCountsProvider);
+    final availableProjects = ref.watch(availableProjectsProvider);
+
+    final currentFilterCount = switch (quickFilter) {
+      VisitorQuickFilter.all => filterCounts.totalCount,
+      VisitorQuickFilter.totalToday => filterCounts.totalToday,
+      VisitorQuickFilter.currentlyIn => filterCounts.currentlyIn,
+      VisitorQuickFilter.checkedOutToday => filterCounts.checkedOutToday,
+    };
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundOf(context),
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        backgroundColor: const Color(0xFFF4F7F8),
-        title: const Text('Visitor Registry'),
+        backgroundColor: AppColors.backgroundOf(context),
+        title: Text(
+          AppStrings.visitorRegistry,
+          style: TextStyle(
+            color: AppColors.textPrimaryOf(context),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.person_add_outlined),
+            icon: Icon(Icons.auto_delete_outlined, color: AppColors.textPrimaryOf(context)),
+            tooltip: AppStrings.recycleBin,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => const VisitorFormScreen(),
+                  builder: (_) => const RecycleBinScreen(),
                 ),
               );
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Column(
+          children: [
           if (quickFilter != VisitorQuickFilter.all)
             Container(
-              margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              margin: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF38DCC0).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF38DCC0).withValues(alpha: 0.4)),
+                color: AppColors.mintTeal.withValues(alpha: isDark ? 0.2 : 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.mintTeal.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.filter_alt, size: 16, color: Color(0xFF0E8B75)),
+                  Icon(
+                    Icons.filter_alt,
+                    size: 16,
+                    color: isDark ? AppColors.mintTeal : const Color(0xFF0E8B75),
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Filtered by: ${quickFilter.label}',
-                      style: const TextStyle(
+                      'Filtered by: ${quickFilter.label} ($currentFilterCount)',
+                      style: TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0E8B75),
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? AppColors.mintTeal : const Color(0xFF0E8B75),
                       ),
                     ),
                   ),
@@ -132,49 +236,135 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                       ref.read(visitorQuickFilterProvider.notifier).state =
                           VisitorQuickFilter.all;
                     },
-                    child: const Icon(Icons.close, size: 16, color: Color(0xFF0E8B75)),
+                    child: Icon(
+                      Icons.close,
+                      size: 16,
+                      color: isDark ? AppColors.mintTeal : const Color(0xFF0E8B75),
+                    ),
                   ),
                 ],
               ),
             ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (val) {
-                ref.read(visitorSearchQueryProvider.notifier).state = val;
-              },
-              decoration: InputDecoration(
-                hintText: 'Search by visitor name or mobile number...',
-                prefixIcon: const Icon(Icons.search, size: 20),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () {
-                          _searchController.clear();
-                          ref.read(visitorSearchQueryProvider.notifier).state = '';
-                        },
-                      )
-                    : null,
-              ),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 40,
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (val) {
+                        ref.read(visitorSearchQueryProvider.notifier).state = val;
+                      },
+                      style: TextStyle(fontSize: 13, color: AppColors.textPrimaryOf(context)),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        filled: true,
+                        fillColor: AppColors.surfaceOf(context),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        hintText: 'Search by visitor name or mobile...',
+                        hintStyle: TextStyle(fontSize: 13, color: AppColors.textSecondaryOf(context)),
+                        prefixIcon: Icon(Icons.search, size: 18, color: AppColors.textSecondaryOf(context)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: AppColors.borderOf(context)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: AppColors.borderOf(context)),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(20)),
+                          borderSide: BorderSide(color: AppColors.mintTeal, width: 1.5),
+                        ),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(Icons.clear, size: 16, color: AppColors.textSecondaryOf(context)),
+                                padding: EdgeInsets.zero,
+                                onPressed: () {
+                                  _searchController.clear();
+                                  ref.read(visitorSearchQueryProvider.notifier).state = '';
+                                },
+                              )
+                            : null,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: _showSortOptions,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceOf(context),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.borderOf(context)),
+                    ),
+                    child: Center(
+                      child: Icon(Icons.sort_rounded, color: AppColors.textPrimaryOf(context), size: 18),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
             child: Row(
               children: [
                 FilterChip(
-                  label: const Text('All Projects'),
-                  selected: selectedProject == null,
+                  shape: const StadiumBorder(),
+                  label: Text('All (${filterCounts.totalCount})'),
+                  selected: selectedProject == null &&
+                      selectedStatus == null &&
+                      quickFilter == VisitorQuickFilter.all,
                   onSelected: (_) {
                     ref.read(selectedProjectFilterProvider.notifier).state = null;
+                    ref.read(selectedStatusFilterProvider.notifier).state = null;
+                    ref.read(visitorQuickFilterProvider.notifier).state =
+                        VisitorQuickFilter.all;
                   },
                 ),
-                const SizedBox(width: 8),
-                ...AppConstants.projects.map((proj) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                const SizedBox(width: 6),
+                FilterChip(
+                  shape: const StadiumBorder(),
+                  label: Text('Today (${filterCounts.totalToday})'),
+                  selected: quickFilter == VisitorQuickFilter.totalToday,
+                  onSelected: (selected) {
+                    ref.read(visitorQuickFilterProvider.notifier).state =
+                        selected ? VisitorQuickFilter.totalToday : VisitorQuickFilter.all;
+                  },
+                ),
+                const SizedBox(width: 6),
+                FilterChip(
+                  shape: const StadiumBorder(),
+                  label: Text('Currently In (${filterCounts.currentlyIn})'),
+                  selected: quickFilter == VisitorQuickFilter.currentlyIn,
+                  onSelected: (selected) {
+                    ref.read(visitorQuickFilterProvider.notifier).state =
+                        selected ? VisitorQuickFilter.currentlyIn : VisitorQuickFilter.all;
+                  },
+                ),
+                const SizedBox(width: 6),
+                FilterChip(
+                  shape: const StadiumBorder(),
+                  label: Text('Checked Out (${filterCounts.checkedOutToday})'),
+                  selected: quickFilter == VisitorQuickFilter.checkedOutToday,
+                  onSelected: (selected) {
+                    ref.read(visitorQuickFilterProvider.notifier).state =
+                        selected ? VisitorQuickFilter.checkedOutToday : VisitorQuickFilter.all;
+                  },
+                ),
+                const SizedBox(width: 6),
+                ...availableProjects.map((proj) => Padding(
+                      padding: const EdgeInsets.only(right: 6),
                       child: FilterChip(
+                        shape: const StadiumBorder(),
                         label: Text(proj),
                         selected: selectedProject == proj,
                         onSelected: (selected) {
@@ -183,10 +373,10 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                         },
                       ),
                     )),
-                const SizedBox(width: 8),
                 ...VisitorStatus.values.map((status) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.only(right: 6),
                       child: FilterChip(
+                        shape: const StadiumBorder(),
                         label: Text(status.label),
                         selected: selectedStatus == status,
                         onSelected: (selected) {
@@ -198,17 +388,17 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
               ],
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Expanded(
             child: RefreshIndicator(
-              backgroundColor: const Color(0xFF142B3B),
-              color: const Color(0xFF38DCC0),
+              backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? AppColors.mintTeal : AppColors.navy,
               onRefresh: () async {
                 await ref.read(visitorListNotifierProvider.notifier).refresh();
               },
-              child: visitorsAsync.when(
-                data: (visitors) {
-                  if (visitors.isEmpty) {
+              child: groupedAsync.when(
+                data: (groupedMap) {
+                  if (groupedMap.isEmpty) {
                     final isFiltered = _searchController.text.isNotEmpty ||
                         selectedProject != null ||
                         selectedStatus != null ||
@@ -239,17 +429,59 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                     );
                   }
 
+                  final sections = groupedMap.entries.toList();
+
                   return ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.only(bottom: 80, top: 4),
-                    itemCount: visitors.length,
-                    itemBuilder: (context, index) {
-                      final visitor = visitors[index];
-                      return VisitorCard(
-                        visitor: visitor,
-                        onTap: () => _openDetails(visitor),
-                        onEdit: () => _openEdit(visitor),
-                        onDelete: () => _confirmDelete(visitor),
+                    padding: const EdgeInsets.only(bottom: 140, top: 4),
+                    itemCount: sections.length,
+                    itemBuilder: (context, sectionIndex) {
+                      final entry = sections[sectionIndex];
+                      final sectionTitle = entry.key;
+                      final visitors = entry.value;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                            child: Row(
+                              children: [
+                                Text(
+                                  sectionTitle,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textPrimaryOf(context),
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.chipOf(context),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '${visitors.length}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimaryOf(context),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          ...visitors.map((visitor) => VisitorCard(
+                                visitor: visitor,
+                                onTap: () => _openDetails(visitor),
+                                onEdit: () => _openEdit(visitor),
+                                onDelete: () => _confirmDelete(visitor),
+                              )),
+                        ],
                       );
                     },
                   );
@@ -257,35 +489,15 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                 loading: () => const Center(
                   child: CircularProgressIndicator(),
                 ),
-                error: (error, _) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline, size: 48, color: Color(0xFFDC2626)),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error loading visitors: $error',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            ref.read(visitorListNotifierProvider.notifier).refresh();
-                          },
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  ),
+                error: (error, stack) => Center(
+                  child: Text('Error loading visitors: $error'),
                 ),
               ),
             ),
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }

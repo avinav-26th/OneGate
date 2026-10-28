@@ -8,6 +8,7 @@ import 'visitor_providers.dart';
 class VisitorFormNotifier extends StateNotifier<AsyncValue<Visitor?>> {
   final VisitorRepository _repository;
   final Ref _ref;
+  bool _isMutating = false;
 
   VisitorFormNotifier(this._repository, this._ref) : super(const AsyncValue.data(null));
 
@@ -19,6 +20,8 @@ class VisitorFormNotifier extends StateNotifier<AsyncValue<Visitor?>> {
     required String project,
     required String purpose,
   }) async {
+    if (_isMutating || state.isLoading) return null;
+    _isMutating = true;
     state = const AsyncValue.loading();
     try {
       final newVisitor = Visitor(
@@ -40,6 +43,8 @@ class VisitorFormNotifier extends StateNotifier<AsyncValue<Visitor?>> {
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       return null;
+    } finally {
+      _isMutating = false;
     }
   }
 
@@ -52,6 +57,8 @@ class VisitorFormNotifier extends StateNotifier<AsyncValue<Visitor?>> {
     required String project,
     required String purpose,
   }) async {
+    if (_isMutating || state.isLoading) return null;
+    _isMutating = true;
     state = const AsyncValue.loading();
     try {
       final updatedVisitor = existing.copyWith(
@@ -70,6 +77,8 @@ class VisitorFormNotifier extends StateNotifier<AsyncValue<Visitor?>> {
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       return null;
+    } finally {
+      _isMutating = false;
     }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 
 class DeleteDialog extends StatelessWidget {
   final String visitorName;
@@ -23,20 +24,21 @@ class DeleteDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: AppColors.surfaceOf(context),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text(
-        'Delete Visitor',
+      title: Text(
+        'Move to Recycle Bin?',
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF0F172A),
+          color: AppColors.textPrimaryOf(context),
         ),
       ),
       content: Text(
-        'Are you sure you want to delete the visitor record for "$visitorName"? This action cannot be undone.',
-        style: const TextStyle(
+        'Are you sure you want to move "$visitorName" to the Recycle Bin? The record can be restored anytime within 30 days.',
+        style: TextStyle(
           fontSize: 14,
-          color: Color(0xFF475569),
+          color: AppColors.textSecondaryOf(context),
           height: 1.4,
         ),
       ),
@@ -44,10 +46,10 @@ class DeleteDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text(
+          child: Text(
             'Cancel',
             style: TextStyle(
-              color: Color(0xFF64748B),
+              color: AppColors.textSecondaryOf(context),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -58,10 +60,10 @@ class DeleteDialog extends StatelessWidget {
             onConfirm();
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFDC2626),
+            backgroundColor: AppColors.danger,
             foregroundColor: Colors.white,
           ),
-          child: const Text('Delete'),
+          child: const Text('Move to Bin'),
         ),
       ],
     );

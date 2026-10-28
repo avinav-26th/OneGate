@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../../core/constants/app_colors.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -10,6 +12,7 @@ class CustomTextField extends StatelessWidget {
   final int maxLines;
   final bool readOnly;
   final VoidCallback? onTap;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextField({
     super.key,
@@ -22,6 +25,7 @@ class CustomTextField extends StatelessWidget {
     this.maxLines = 1,
     this.readOnly = false,
     this.onTap,
+    this.inputFormatters,
   });
 
   @override
@@ -31,10 +35,10 @@ class CustomTextField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF334155),
+            color: AppColors.textPrimaryOf(context),
           ),
         ),
         const SizedBox(height: 6),
@@ -45,14 +49,15 @@ class CustomTextField extends StatelessWidget {
           maxLines: maxLines,
           readOnly: readOnly,
           onTap: onTap,
-          style: const TextStyle(
+          inputFormatters: inputFormatters,
+          style: TextStyle(
             fontSize: 15,
-            color: Color(0xFF0F172A),
+            color: AppColors.textPrimaryOf(context),
           ),
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: prefixIcon != null
-                ? Icon(prefixIcon, size: 20, color: const Color(0xFF64748B))
+                ? Icon(prefixIcon, size: 20, color: AppColors.textSecondaryOf(context))
                 : null,
           ),
         ),

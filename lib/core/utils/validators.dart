@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+
 class Validators {
   static String? validateName(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -38,5 +40,24 @@ class Validators {
       return '$fieldName is required';
     }
     return null;
+  }
+}
+
+class WordLimitFormatter extends TextInputFormatter {
+  final int maxWords;
+
+  const WordLimitFormatter(this.maxWords);
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.trim().isEmpty) return newValue;
+    final words = newValue.text.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (words.length <= maxWords) {
+      return newValue;
+    }
+    return oldValue;
   }
 }

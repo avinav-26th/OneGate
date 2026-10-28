@@ -2,7 +2,7 @@ import 'visitor_status.dart';
 
 class VisitStatusPolicy {
   static bool canCheckIn(VisitorStatus status) {
-    return status == VisitorStatus.registered;
+    return status == VisitorStatus.registered || status == VisitorStatus.checkedOut;
   }
 
   static bool canCheckOut(VisitorStatus status) {

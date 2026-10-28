@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../../../core/constants/app_colors.dart';
 
 class TodayMetricsCard extends StatelessWidget {
   final int totalToday;
@@ -18,8 +20,25 @@ class TodayMetricsCard extends StatelessWidget {
     required this.onTapCheckedOut,
   });
 
+  String _formatCount(int value) {
+    return NumberFormat.decimalPattern().format(value);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isLarge = totalToday > 99999 || currentlyCheckedIn > 99999 || checkedOutToday > 99999;
+    final isDark = AppColors.isDark(context);
+    final textPrimary = AppColors.textPrimaryOf(context);
+    final textSecondary = AppColors.textSecondaryOf(context);
+    final dividerColor = AppColors.dividerOf(context);
+    final arrowColor = isDark ? Colors.grey.shade500 : Colors.grey.shade400;
+    final tealBg = const Color(0xFF38DCC0).withValues(alpha: isDark ? 0.22 : 0.15);
+    final tealIcon = isDark ? AppColors.mintTeal : const Color(0xFF0E8B75);
+    final greenBg = const Color(0xFF059669).withValues(alpha: isDark ? 0.25 : 0.15);
+    final greenIcon = isDark ? const Color(0xFF34D399) : const Color(0xFF059669);
+    final slateBg = isDark ? const Color(0xFF334155).withValues(alpha: 0.5) : const Color(0xFFF1F5F9);
+    final slateIcon = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -33,12 +52,12 @@ class TodayMetricsCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF38DCC0).withValues(alpha: 0.15),
+                      color: tealBg,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.people_outline,
-                      color: Color(0xFF0E8B75),
+                      color: tealIcon,
                       size: 24,
                     ),
                   ),
@@ -47,21 +66,21 @@ class TodayMetricsCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Total Visitors Today',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF64748B),
+                            color: textSecondary,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '$totalToday',
-                          style: const TextStyle(
+                          _formatCount(totalToday),
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF142B3B),
+                            color: textPrimary,
                             letterSpacing: -0.5,
                           ),
                         ),
@@ -71,131 +90,237 @@ class TodayMetricsCard extends StatelessWidget {
                   Icon(
                     Icons.arrow_forward_ios,
                     size: 14,
-                    color: Colors.grey.shade400,
+                    color: arrowColor,
                   ),
                 ],
               ),
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          IntrinsicHeight(
-            child: Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: onTapCurrentlyIn,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      child: Row(
+          Divider(height: 1, color: dividerColor),
+          if (isLarge) ...[
+            InkWell(
+              onTap: onTapCurrentlyIn,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: greenBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.login_rounded,
+                        color: greenIcon,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD1FAE5),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.login_rounded,
-                              color: Color(0xFF059669),
-                              size: 18,
+                          Text(
+                            'Currently In',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: textSecondary,
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '$currentlyCheckedIn',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF142B3B),
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                const Text(
-                                  'Currently In',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
+                          const SizedBox(height: 2),
+                          Text(
+                            _formatCount(currentlyCheckedIn),
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: textPrimary,
                             ),
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            size: 12,
-                            color: Colors.grey.shade400,
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ),
-                const VerticalDivider(width: 1, color: Color(0xFFF1F5F9)),
-                Expanded(
-                  child: InkWell(
-                    onTap: onTapCheckedOut,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.logout_rounded,
-                              color: Color(0xFF64748B),
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '$checkedOutToday',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF142B3B),
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                const Text(
-                                  'Checked Out',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            size: 12,
-                            color: Colors.grey.shade400,
-                          ),
-                        ],
-                      ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 14,
+                      color: arrowColor,
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+            Divider(height: 1, color: dividerColor),
+            InkWell(
+              onTap: onTapCheckedOut,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: slateBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.logout_rounded,
+                        color: slateIcon,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Checked Out Today',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _formatCount(checkedOutToday),
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 14,
+                      color: arrowColor,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ] else
+            IntrinsicHeight(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: onTapCurrentlyIn,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: greenBg,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.login_rounded,
+                                color: greenIcon,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _formatCount(currentlyCheckedIn),
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Currently In',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 12,
+                              color: arrowColor,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  VerticalDivider(width: 1, color: dividerColor),
+                  Expanded(
+                    child: InkWell(
+                      onTap: onTapCheckedOut,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: slateBg,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.logout_rounded,
+                                color: slateIcon,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _formatCount(checkedOutToday),
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Checked Out',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 12,
+                              color: arrowColor,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
   }
 }
-

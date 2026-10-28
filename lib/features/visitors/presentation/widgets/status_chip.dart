@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../domain/visitor_status.dart';
 
 class StatusChip extends StatelessWidget {
@@ -8,21 +9,22 @@ class StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
     Color bg;
     Color fg;
 
     switch (status) {
       case VisitorStatus.registered:
-        bg = const Color(0xFFFEF3C7);
-        fg = const Color(0xFFB45309);
+        bg = isDark ? const Color(0xFF78350F).withValues(alpha: 0.35) : const Color(0xFFFEF3C7);
+        fg = isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309);
         break;
       case VisitorStatus.checkedIn:
-        bg = const Color(0xFFD1FAE5);
-        fg = const Color(0xFF047857);
+        bg = isDark ? const Color(0xFF064E3B).withValues(alpha: 0.45) : const Color(0xFFD1FAE5);
+        fg = isDark ? const Color(0xFF34D399) : const Color(0xFF047857);
         break;
       case VisitorStatus.checkedOut:
-        bg = const Color(0xFFF1F5F9);
-        fg = const Color(0xFF475569);
+        bg = isDark ? const Color(0xFF334155).withValues(alpha: 0.5) : const Color(0xFFF1F5F9);
+        fg = isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569);
         break;
     }
 

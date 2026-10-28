@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../domain/visitor.dart';
 import 'status_chip.dart';
 
@@ -18,28 +19,35 @@ class VisitorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: const Color(0xFFE2E8F0),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
                     child: Text(
                       visitor.name.isNotEmpty ? visitor.name[0].toUpperCase() : 'V',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1E293B),
+                        color: AppColors.textPrimaryOf(context),
                       ),
                     ),
                   ),
@@ -50,26 +58,26 @@ class VisitorCard extends StatelessWidget {
                       children: [
                         Text(
                           visitor.name,
-                          style: const TextStyle(
-                            fontSize: 16,
+                          style: TextStyle(
+                            fontSize: 16.5,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
+                            color: AppColors.textPrimaryOf(context),
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.phone_outlined,
                               size: 14,
-                              color: Color(0xFF64748B),
+                              color: AppColors.textSecondaryOf(context),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               visitor.mobile,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF64748B),
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                color: AppColors.textSecondaryOf(context),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -81,34 +89,34 @@ class VisitorCard extends StatelessWidget {
                   StatusChip(status: visitor.status),
                 ],
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Divider(height: 1, color: AppColors.dividerOf(context)),
               ),
               Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      color: AppColors.chipOf(context),
+                      borderRadius: BorderRadius.circular(7),
+                      border: Border.all(color: AppColors.borderOf(context)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.apartment_outlined,
-                          size: 13,
-                          color: Color(0xFF475569),
+                          size: 13.5,
+                          color: AppColors.textSecondaryOf(context),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 5),
                         Text(
                           visitor.project,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF334155),
+                            color: AppColors.textPrimaryOf(context),
                           ),
                         ),
                       ],
@@ -118,33 +126,33 @@ class VisitorCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      color: AppColors.chipOf(context),
+                      borderRadius: BorderRadius.circular(7),
+                      border: Border.all(color: AppColors.borderOf(context)),
                     ),
                     child: Text(
                       visitor.visitorType,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF64748B),
+                        color: AppColors.textSecondaryOf(context),
                       ),
                     ),
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    color: const Color(0xFF64748B),
+                    icon: const Icon(Icons.edit_outlined, size: 19),
+                    color: AppColors.textSecondaryOf(context),
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                     onPressed: onEdit,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 6),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    color: const Color(0xFFDC2626),
+                    icon: const Icon(Icons.delete_outline, size: 19),
+                    color: AppColors.danger,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                     onPressed: onDelete,
                   ),
                 ],
