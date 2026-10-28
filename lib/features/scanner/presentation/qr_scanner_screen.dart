@@ -21,6 +21,7 @@ class QrScannerScreen extends ConsumerStatefulWidget {
 class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     with AutomaticKeepAliveClientMixin {
   final MobileScannerController _scannerController = MobileScannerController(
+    autoStart: false,
     detectionSpeed: DetectionSpeed.noDuplicates,
     returnImage: false,
   );
@@ -36,7 +37,10 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
   @override
   void initState() {
     super.initState();
-    _initLightSensor();
+    if (widget.isActive) {
+      _scannerController.start();
+      _initLightSensor();
+    }
   }
 
   @override
@@ -45,9 +49,12 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     if (oldWidget.isActive != widget.isActive) {
       if (widget.isActive) {
         _scannerController.start();
+        _initLightSensor();
       } else {
         _scannerController.stop();
         _turnOffTorch();
+        _lightSubscription?.cancel();
+        _lightSubscription = null;
       }
     }
   }

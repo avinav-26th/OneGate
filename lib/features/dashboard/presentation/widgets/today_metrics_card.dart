@@ -101,7 +101,7 @@ class TodayMetricsCard extends StatelessWidget {
             InkWell(
               onTap: onTapCurrentlyIn,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: Row(
                   children: [
                     Container(
@@ -113,7 +113,7 @@ class TodayMetricsCard extends StatelessWidget {
                       child: Icon(
                         Icons.login_rounded,
                         color: greenIcon,
-                        size: 22,
+                        size: 24,
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -133,9 +133,10 @@ class TodayMetricsCard extends StatelessWidget {
                           Text(
                             _formatCount(currentlyCheckedIn),
                             style: TextStyle(
-                              fontSize: 22,
+                              fontSize: 24,
                               fontWeight: FontWeight.w800,
                               color: textPrimary,
+                              letterSpacing: -0.5,
                             ),
                           ),
                         ],
@@ -154,7 +155,7 @@ class TodayMetricsCard extends StatelessWidget {
             InkWell(
               onTap: onTapCheckedOut,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: Row(
                   children: [
                     Container(
@@ -166,7 +167,7 @@ class TodayMetricsCard extends StatelessWidget {
                       child: Icon(
                         Icons.logout_rounded,
                         color: slateIcon,
-                        size: 22,
+                        size: 24,
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -186,9 +187,10 @@ class TodayMetricsCard extends StatelessWidget {
                           Text(
                             _formatCount(checkedOutToday),
                             style: TextStyle(
-                              fontSize: 22,
+                              fontSize: 24,
                               fontWeight: FontWeight.w800,
                               color: textPrimary,
+                              letterSpacing: -0.5,
                             ),
                           ),
                         ],
@@ -211,41 +213,44 @@ class TodayMetricsCard extends StatelessWidget {
                     child: InkWell(
                       onTap: onTapCurrentlyIn,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         child: Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: greenBg,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
                                 Icons.login_rounded,
                                 color: greenIcon,
-                                size: 18,
+                                size: 24,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 14),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _formatCount(currentlyCheckedIn),
+                                    'Currently In',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w800,
-                                      color: textPrimary,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: textSecondary,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'Currently In',
+                                    _formatCount(currentlyCheckedIn),
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: textSecondary,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w800,
+                                      color: textPrimary,
+                                      letterSpacing: -0.5,
                                     ),
                                   ),
                                 ],
@@ -253,7 +258,7 @@ class TodayMetricsCard extends StatelessWidget {
                             ),
                             Icon(
                               Icons.arrow_forward_ios,
-                              size: 12,
+                              size: 14,
                               color: arrowColor,
                             ),
                           ],
@@ -266,41 +271,44 @@ class TodayMetricsCard extends StatelessWidget {
                     child: InkWell(
                       onTap: onTapCheckedOut,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         child: Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: slateBg,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
                                 Icons.logout_rounded,
                                 color: slateIcon,
-                                size: 18,
+                                size: 24,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 14),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _formatCount(checkedOutToday),
+                                    'Checked Out',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w800,
-                                      color: textPrimary,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: textSecondary,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'Checked Out',
+                                    _formatCount(checkedOutToday),
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: textSecondary,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w800,
+                                      color: textPrimary,
+                                      letterSpacing: -0.5,
                                     ),
                                   ),
                                 ],
@@ -308,7 +316,7 @@ class TodayMetricsCard extends StatelessWidget {
                             ),
                             Icon(
                               Icons.arrow_forward_ios,
-                              size: 12,
+                              size: 14,
                               color: arrowColor,
                             ),
                           ],
