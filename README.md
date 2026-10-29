@@ -22,6 +22,13 @@
 
 ---
 
+> ### Production Release APK Download
+> **Direct Android APK (ARM 64-bit Optimized)**:  
+> [**Download OneGate Release APK (Google Drive)**](https://drive.google.com/file/d/16B_MFFztgg_nJlp3lUTHRdnQMRyt3Uo9/view?usp=sharing)  
+> *Fully optimized, release-signed build compatible with all modern Android devices.*
+
+---
+
 ## 1. Executive Summary & Problem Space
 
 **OneGate** is a mobile visitor management application engineered specifically for real estate security desks, gated residential complexes, and commercial towers across Sumadhura properties (fictional). Designed around the high-pressure daily workflows of on-ground security personnel and gatekeepers, OneGate replaces slow, illegible paper logbooks with an instantaneous, contactless digital gate pass system.
@@ -612,6 +619,6 @@ To deliver an uncompromising, high-refresh mobile application within the practic
 <div align="center">
 
 **OneGate** &bull; Developed for the **Sumadhura** Developer Practical Assessment  
-*Made by Avii 💚.*
+*Made by Avii 💚*
 
 </div>
