@@ -1,12 +1,12 @@
 # OneGate - Enterprise Visitor Management Mobile Application
 
-**Practical Assignment Submission for Sumadhura**
+**Practical Assignment Submission for Sumadhura (fictional)**
 
 ---
 
 ## Table of Contents
 1. [Executive Summary & Problem Space](#1-executive-summary--problem-space)
-2. [Real-World Screen Tour & Design System](#2-real-world-screen-tour--design-system)
+2. [Real-World Screen Tour & Dual-Theme System](#2-real-world-screen-tour--dual-theme-system)
 3. [Architectural Blueprint & Clean Layers](#3-architectural-blueprint--clean-layers)
 4. [Key Technical Decisions & ADRs](#4-key-technical-decisions--adrs)
 5. [Technical Evolution & Strategic Pivot Points](#5-technical-evolution--strategic-pivot-points)
@@ -42,24 +42,92 @@ OneGate solves these real-world constraints through enterprise engineering:
 
 ---
 
-## 2. Real-World Screen Tour & Design System
+## 2. Real-World Screen Tour & Dual-Theme System
 
-The visual design is anchored by the Sumadhura (fictional) brand identity palette: **Deep Navy** (`#142B3B`), **Mint Teal** (`#38DCC0`), **Crisp White** (`#FFFFFF`), **Off-White Canvas** (`#F4F7F8`), and **Slate Dark Surface** (`#1E293B`).
+The application features a fully synchronized, zero-latency **Dual-Theme System** designed for optimal visibility across daytime operations and low-light night shifts. The design system is anchored by the Sumadhura (fictional) brand identity palette: **Deep Navy** (`#142B3B`), **Mint Teal** (`#38DCC0`), **Crisp White** (`#FFFFFF`), **Off-White Canvas** (`#F4F7F8`), and **Slate Dark Surface** (`#1E293B`).
 
-| Dashboard & Metrics | Visitor Registry | Date-Grouped Sections |
-| :---: | :---: | :---: |
-| <img src="docs/screenshots/app_screen_01.jpeg" width="220" alt="Dashboard Screen" /> | <img src="docs/screenshots/app_screen_02.jpeg" width="220" alt="Visitor Registry" /> | <img src="docs/screenshots/app_screen_03.jpeg" width="220" alt="Date Grouped Registry" /> |
-| Real-time KPIs, dynamic greeting, quick shortcuts, and recent visitor feed | Live search by name or mobile, quick chips, and parameter counts | Chronological sections (Today, Yesterday, Month) with active counts |
+> **Full Application Video Demonstration**:  
+> [**▶️ Watch OneGate Screen Recording Walkthrough (MP4)**](https://res.cloudinary.com/daxydcpj0/video/upload/v1793277768/OneGate_screenrecording_ldrvar.mp4)
 
-| Registration Form | Digital Pass & Profile | QR Scanner & Camera |
-| :---: | :---: | :---: |
-| <img src="docs/screenshots/app_screen_04.jpeg" width="220" alt="Registration Form" /> | <img src="docs/screenshots/app_screen_06.jpeg" width="220" alt="Visitor Pass Details" /> | <img src="docs/screenshots/app_screen_09.jpeg" width="220" alt="QR Scanner" /> |
-| Strict input caps, custom 'Other' input, and quick purpose chips | Collapsible vector QR pass, expandable session timeline, check in/out | Elevated camera viewfinder, auto-torch assist, and manual ID fallback |
+### 2.1 Dashboard & Activity Metrics
+Real-time KPI summary (Total Today, Currently In, Checked Out Today) calculated dynamically from local timestamps with time-adaptive greetings, quick shortcuts, and the live recent visitor feed.
 
-| Recycle Bin (Quarantine) | Soft-Delete Confirmation | Manual Pass Lookup Modal |
-| :---: | :---: | :---: |
-| <img src="docs/screenshots/app_screen_08.jpeg" width="220" alt="Recycle Bin" /> | <img src="docs/screenshots/app_screen_05.jpeg" width="220" alt="Delete Dialog" /> | <img src="docs/screenshots/app_screen_10.jpeg" width="220" alt="Manual Pass Lookup" /> |
-| 30-day countdown pill, restore pass, and permanent purge actions | Accidental deletion safeguard with destructive dialog confirmation | Accessible fallback when camera hardware or QR pass is damaged |
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277393/dashboard-l_emz7by.jpg" width="280" alt="Dashboard - Light Mode" /> | <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277391/dashboard-d_clyvbg.jpg" width="280" alt="Dashboard - Dark Mode" /> |
+| Crisp off-white canvas with high-contrast navy typography | Deep slate surfaces with luminous mint teal accents |
+
+---
+
+### 2.2 Visitor Registry & Live Search
+Live search by name or 10-digit mobile number, instant project/status filter pills with live counts, and compact scannable visitor cards.
+
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277407/visitor-list-l_fhilmd.jpg" width="280" alt="Visitor List - Light Mode" /> | <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277401/visitor-list-d_okgomq.jpg" width="280" alt="Visitor List - Dark Mode" /> |
+| Clean card elevation and clear status indicators | High-contrast dark cards with rounded touch targets |
+
+---
+
+### 2.3 Chronological Grouping & Sorting Controls
+Chronological date-grouped headers (Today, Yesterday, This Week, Month-Year) with active counts, plus a sleek bottom modal sheet for instant multi-criteria sorting.
+
+| Active Filters & Date Slices (Light) | Active Filters & Date Slices (Dark) |
+| :---: | :---: |
+| <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277388/filters-l_ujpepg.jpg" width="280" alt="Filters - Light Mode" /> | <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277395/filters-d_rxr9tx.jpg" width="280" alt="Filters - Dark Mode" /> |
+
+| Sort Bottom Sheet (Light) | Sort Bottom Sheet (Dark) |
+| :---: | :---: |
+| <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277398/sort-l_gpssyv.jpg" width="280" alt="Sort Sheet - Light Mode" /> | <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277399/sort-b_ehlsqd.jpg" width="280" alt="Sort Sheet - Dark Mode" /> |
+
+---
+
+### 2.4 Visitor Registration & KYC Form
+Streamlined on-ground intake form with strict 10-digit mobile formatting, input length limiting, custom 'Other' visitor type reveal, and interactive quick-fill purpose chips.
+
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277397/registration-l_tifx7x.jpg" width="280" alt="Registration Form - Light Mode" /> | <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277394/registration-d_uvhume.jpg" width="280" alt="Registration Form - Dark Mode" /> |
+| Mint focus borders and structured dropdown pickers | Deep background with glare-free input contrast |
+
+---
+
+### 2.5 Visitor Digital Pass & Lifecycle Timeline
+Features the decoupled collapsing QR pass header (smoothly morphing between expanded 224px vector QR pass and compact 68px tile) alongside the full KYC profile and multi-session audit trail.
+
+| Pass Details: Expanded QR (Light) | Pass Details: Expanded QR (Dark) |
+| :---: | :---: |
+| <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277399/visitor-details-expanded-l_ojvum5.jpg" width="280" alt="Pass Expanded - Light Mode" /> | <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277399/visitor-details-expanded-d_pgsclj.jpg" width="280" alt="Pass Expanded - Dark Mode" /> |
+
+| Pass Details: Collapsed Header (Light) | Pass Details: Collapsed Header (Dark) |
+| :---: | :---: |
+| <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277399/visitor-details-shrinked-l_omuk8h.jpg" width="280" alt="Pass Collapsed - Light Mode" /> | <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277399/visitor-details-shrinked-d_oblth1.jpg" width="280" alt="Pass Collapsed - Dark Mode" /> |
+
+---
+
+### 2.6 QR Camera Scanner & Manual Lookup Fallback
+Hardware-accelerated camera viewfinder with ambient darkness detection and auto-torch assistance, paired with an accessible manual pass lookup modal for damaged QR codes or camera issues.
+
+| Camera Viewfinder (Light) | Camera Viewfinder (Dark) |
+| :---: | :---: |
+| <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277397/scanner-l_d4nl59.jpg" width="280" alt="QR Scanner - Light Mode" /> | <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277397/scanner-d_vaubld.jpg" width="280" alt="QR Scanner - Dark Mode" /> |
+
+| Manual Pass Lookup (Light) | Manual Pass Lookup (Dark) |
+| :---: | :---: |
+| <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277393/manual-l_fostmx.jpg" width="280" alt="Manual Lookup - Light Mode" /> | <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277393/manual-d_vyv4hn.jpg" width="280" alt="Manual Lookup - Dark Mode" /> |
+
+---
+
+### 2.7 Soft-Delete Confirmation & 30-Day Recycle Bin Quarantine
+Accidental deletion safeguard modal routing deleted records into a 30-day quarantine bin with countdown pills, one-tap pass restoration, permanent purge, and interactive 3-second auto-dismissing Undo feedback.
+
+| Delete Confirmation (Light) | Delete Confirmation (Dark) |
+| :---: | :---: |
+| <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277397/delete-confirm-l_pdteud.jpg" width="280" alt="Delete Confirm - Light Mode" /> | <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277397/delete-confirm-d_tx9uj1.jpg" width="280" alt="Delete Confirm - Dark Mode" /> |
+
+| Recycle Bin Quarantine (Light) | Recycle Bin Quarantine (Dark) |
+| :---: | :---: |
+| <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277397/recycle-bin-l_g4uajr.jpg" width="280" alt="Recycle Bin - Light Mode" /> | <img src="https://res.cloudinary.com/daxydcpj0/image/upload/v1793277393/recycle-bin-d_ssvbam.jpg" width="280" alt="Recycle Bin - Dark Mode" /> |
 
 ---
 
@@ -435,20 +503,20 @@ one_gate/
 │   ├── icon/
 │   │   └── app_icon.png                   # Launcher icon asset
 │   └── images/
+│       ├── screenshots/                   # 22 verified dual-theme screenshots (Light & Dark)
+│       │   ├── dashboard-l.jpeg / dashboard-d.jpeg
+│       │   ├── visitor-list-l.jpeg / visitor-list-d.jpeg
+│       │   ├── filters-l.jpeg / filters-d.jpeg
+│       │   ├── sort-l.jpeg / sort-b.jpeg
+│       │   ├── registration-l.jpeg / registration-d.jpeg
+│       │   ├── visitor-details-expanded-l.jpeg / visitor-details-expanded-d.jpeg
+│       │   ├── visitor-details-shrinked-l.jpeg / visitor-details-shrinked-d.jpeg
+│       │   ├── scanner-l.jpeg / scanner-d.jpeg
+│       │   ├── manual-l.jpeg / manual-d.jpeg
+│       │   ├── delete-confirm-l.jpeg / delete-confirm-d.jpeg
+│       │   └── recycle-bin-l.jpeg / recycle-bin-d.jpeg
 │       ├── onegate_logo.png               # High-resolution brand logo
 │       └── real_estate_illustration.svg   # Vector banner illustration
-├── docs/
-│   └── screenshots/                       # 10 verified mobile screenshots
-│       ├── app_screen_01.jpeg             # Dashboard screen (Dark Mode)
-│       ├── app_screen_02.jpeg             # Visitor registry screen
-│       ├── app_screen_03.jpeg             # Date-grouped sections
-│       ├── app_screen_04.jpeg             # Visitor registration form
-│       ├── app_screen_05.jpeg             # Delete confirmation dialog
-│       ├── app_screen_06.jpeg             # Visitor details & QR pass
-│       ├── app_screen_07.jpeg             # Collapsed pass header state
-│       ├── app_screen_08.jpeg             # Recycle Bin screen
-│       ├── app_screen_09.jpeg             # QR camera scanner
-│       └── app_screen_10.jpeg             # Manual pass lookup modal
 ├── lib/
 │   ├── app/                               # App entry, navigation shell & themes
 │   │   ├── widgets/
