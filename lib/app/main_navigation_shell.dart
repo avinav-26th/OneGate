@@ -68,7 +68,10 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
             }
           },
           children: [
-            QrScannerScreen(isActive: currentIndex == 0),
+            QrScannerScreen(
+              isActive: currentIndex == 0,
+              onNavigateTab: _onTabSelected,
+            ),
             DashboardScreen(onNavigateTab: _onTabSelected),
             const VisitorListScreen(),
           ],

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:light/light.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../../app/main_navigation_shell.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_errors.dart';
 import '../../../core/constants/app_strings.dart';
@@ -13,8 +14,13 @@ import '../../visitors/presentation/screens/visitor_details_screen.dart';
 // camera viewfinder for hardware pass scanning
 class QrScannerScreen extends ConsumerStatefulWidget {
   final bool isActive;
+  final void Function(int index)? onNavigateTab;
 
-  const QrScannerScreen({super.key, this.isActive = true});
+  const QrScannerScreen({
+    super.key,
+    this.isActive = true,
+    this.onNavigateTab,
+  });
 
   @override
   ConsumerState<QrScannerScreen> createState() => _QrScannerScreenState();
@@ -22,11 +28,7 @@ class QrScannerScreen extends ConsumerStatefulWidget {
 
 class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     with AutomaticKeepAliveClientMixin {
-  final MobileScannerController _scannerController = MobileScannerController(
-    autoStart: false,
-    detectionSpeed: DetectionSpeed.noDuplicates,
-    returnImage: false,
-  );
+  late MobileScannerController _scannerController;
 
   @override
   bool get wantKeepAlive => true;
@@ -35,13 +37,22 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
   final TextEditingController _manualIdController = TextEditingController();
   StreamSubscription<int>? _lightSubscription;
   bool _autoTorchActive = false;
+  bool _isHandlingPermissionDenied = false;
+
+  MobileScannerController _createController() {
+    return MobileScannerController(
+      autoStart: false,
+      detectionSpeed: DetectionSpeed.noDuplicates,
+      returnImage: false,
+    );
+  }
 
   @override
   void initState() {
     super.initState();
+    _scannerController = _createController();
     if (widget.isActive) {
-      _scannerController.start();
-      _initLightSensor();
+      _startScannerFlow(isInitial: true);
     }
   }
 
@@ -50,15 +61,58 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.isActive != widget.isActive) {
       if (widget.isActive) {
-        _scannerController.start();
-        _initLightSensor();
+        _startScannerFlow();
       } else {
-        _scannerController.stop();
-        _turnOffTorch();
-        _lightSubscription?.cancel();
-        _lightSubscription = null;
+        _stopScanner();
       }
     }
+  }
+
+  void _stopScanner() {
+    _turnOffTorch();
+    _lightSubscription?.cancel();
+    _lightSubscription = null;
+    _scannerController.stop();
+  }
+
+  // request camera permissions and start scanner stream
+  Future<void> _startScannerFlow({bool isInitial = false}) async {
+    _isHandlingPermissionDenied = false;
+
+    if (!isInitial && !_scannerController.value.isRunning) {
+      try {
+        await _scannerController.dispose();
+      } catch (_) {}
+      if (!mounted) return;
+      _scannerController = _createController();
+      if (mounted) {
+        setState(() {});
+      }
+    }
+
+    try {
+      await _scannerController.start();
+      if (!mounted) return;
+      _initLightSensor();
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    final state = _scannerController.value;
+    if (state.error?.errorCode == MobileScannerErrorCode.permissionDenied ||
+        !state.hasCameraPermission) {
+      _handlePermissionDenied();
+    }
+  }
+
+  // navigate back to dashboard when camera access is denied
+  void _handlePermissionDenied() {
+    if (!mounted || _isHandlingPermissionDenied) return;
+    _isHandlingPermissionDenied = true;
+
+    widget.onNavigateTab?.call(1);
+    ref.read(mainNavigationIndexProvider.notifier).state = 1;
+    AppSnackBar.error(context, AppErrors.cameraPermissionRequired);
   }
 
   void _turnOffTorch() {
@@ -249,16 +303,16 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundOf(context),
+      backgroundColor: Colors.black,
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        backgroundColor: AppColors.backgroundOf(context),
-        title: Text(
+        backgroundColor: Colors.black,
+        title: const Text(
           'Scan Gate Pass',
           style: TextStyle(
-            color: AppColors.textPrimaryOf(context),
+            color: Colors.white,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -266,138 +320,171 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
           ValueListenableBuilder<MobileScannerState>(
             valueListenable: _scannerController,
             builder: (context, state, child) {
+              final isReady = state.isInitialized && state.isRunning;
+              if (!isReady) return const SizedBox.shrink();
               final isTorchOn = state.torchState == TorchState.on;
-              return IconButton(
-                icon: Icon(
-                  isTorchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
-                  color: isTorchOn ? AppColors.mintTeal : AppColors.textPrimaryOf(context),
-                ),
-                onPressed: () {
-                  _autoTorchActive = false;
-                  _scannerController.toggleTorch();
-                },
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      isTorchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+                      color: isTorchOn ? AppColors.mintTeal : Colors.white,
+                    ),
+                    onPressed: () {
+                      _autoTorchActive = false;
+                      _scannerController.toggleTorch();
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.flip_camera_ios_rounded, color: Colors.white),
+                    onPressed: () => _scannerController.switchCamera(),
+                  ),
+                ],
               );
             },
-          ),
-          IconButton(
-            icon: Icon(Icons.flip_camera_ios_rounded, color: AppColors.textPrimaryOf(context)),
-            onPressed: () => _scannerController.switchCamera(),
           ),
         ],
       ),
-      body: Stack(
-        alignment: Alignment.center,
-        children: [
-          MobileScanner(
-            controller: _scannerController,
-            onDetect: (capture) {
-              final barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty) {
-                final value = barcodes.first.rawValue;
-                if (value != null) {
-                  _handleBarcode(value);
+      body: Container(
+        color: Colors.black,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            MobileScanner(
+              key: ObjectKey(_scannerController),
+              controller: _scannerController,
+              onDetect: (capture) {
+                final barcodes = capture.barcodes;
+                if (barcodes.isNotEmpty) {
+                  final value = barcodes.first.rawValue;
+                  if (value != null) {
+                    _handleBarcode(value);
+                  }
                 }
-              }
-            },
-            errorBuilder: (context, error, child) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+              },
+              placeholderBuilder: (context, child) => const ColoredBox(color: Colors.black),
+              errorBuilder: (context, error, child) {
+                if (error.errorCode == MobileScannerErrorCode.permissionDenied) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _handlePermissionDenied();
+                  });
+                  return const ColoredBox(color: Colors.black);
+                }
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.camera_alt_outlined, size: 56, color: Color(0xFFDC2626)),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Camera Unavailable',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Unable to initialize camera preview on this device.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton.icon(
+                          onPressed: _showManualLookupDialog,
+                          icon: const Icon(Icons.keyboard_outlined),
+                          label: const Text('Enter Pass ID Manually'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            Positioned.fill(
+              child: ValueListenableBuilder<MobileScannerState>(
+                valueListenable: _scannerController,
+                builder: (context, state, child) {
+                  if (!state.isInitialized || !state.isRunning) {
+                    return const SizedBox.shrink();
+                  }
+                  return Stack(
+                    alignment: Alignment.center,
                     children: [
-                      const Icon(Icons.camera_alt_outlined, size: 56, color: Color(0xFFDC2626)),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Camera Access Denied or Unavailable',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimaryOf(context)),
+                      Transform.translate(
+                        offset: const Offset(0, -65),
+                        child: Container(
+                          width: 280,
+                          height: 280,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.mintTeal, width: 2.8),
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Please grant camera permissions or use manual pass lookup.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textSecondaryOf(context), fontSize: 13),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        onPressed: _showManualLookupDialog,
-                        icon: const Icon(Icons.keyboard_outlined),
-                        label: const Text('Enter Pass ID Manually'),
+                      Positioned(
+                        bottom: 96,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.65),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Text(
+                                AppStrings.alignQr,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            ElevatedButton.icon(
+                              onPressed: _showManualLookupDialog,
+                              icon: Icon(Icons.keyboard_alt_outlined, size: 18, color: AppColors.textPrimaryOf(context)),
+                              label: Text(
+                                AppStrings.manualEntry,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimaryOf(context),
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.surfaceOf(context),
+                                foregroundColor: AppColors.textPrimaryOf(context),
+                                elevation: 4,
+                                shadowColor: Colors.black38,
+                                shape: const StadiumBorder(),
+                                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                  ),
-                ),
-              );
-            },
-          ),
-          Transform.translate(
-            offset: const Offset(0, -65),
-            child: Container(
-              width: 280,
-              height: 280,
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.mintTeal, width: 2.8),
-                borderRadius: BorderRadius.circular(24),
+                  );
+                },
               ),
             ),
-          ),
-          Positioned(
-            bottom: 96,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.65),
-                    borderRadius: BorderRadius.circular(20),
+            ValueListenableBuilder<bool>(
+              valueListenable: _isProcessing,
+              builder: (context, processing, _) {
+                if (!processing) return const SizedBox.shrink();
+                return Container(
+                  color: Colors.black45,
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
                   ),
-                  child: const Text(
-                    AppStrings.alignQr,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                ElevatedButton.icon(
-                  onPressed: _showManualLookupDialog,
-                  icon: Icon(Icons.keyboard_alt_outlined, size: 18, color: AppColors.textPrimaryOf(context)),
-                  label: Text(
-                    AppStrings.manualEntry,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimaryOf(context),
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.surfaceOf(context),
-                    foregroundColor: AppColors.textPrimaryOf(context),
-                    elevation: 4,
-                    shadowColor: Colors.black38,
-                    shape: const StadiumBorder(),
-                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                  ),
-                ),
-              ],
+                );
+              },
             ),
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable: _isProcessing,
-            builder: (context, processing, _) {
-              if (!processing) return const SizedBox.shrink();
-              return Container(
-                color: Colors.black45,
-                child: const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
-                ),
-              );
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

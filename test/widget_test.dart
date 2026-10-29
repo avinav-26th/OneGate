@@ -162,6 +162,8 @@ void main() {
       expect(AppErrors.nameRequired.isNotEmpty, isTrue);
       expect(AppErrors.mobileRequired.isNotEmpty, isTrue);
       expect(AppErrors.registrationFailed.isNotEmpty, isTrue);
+      expect(AppErrors.cameraPermissionRequired.isNotEmpty, isTrue);
+      expect(AppErrors.cameraPermissionRequired, contains('Camera permission'));
     });
 
     test('Validators use AppErrors constants', () {

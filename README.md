@@ -495,7 +495,7 @@ flutter test test/widget_test.dart
 
 ---
 
-## 13. Verified Codebase Directory Structure
+## 13. Codebase Directory Structure
 
 ```
 one_gate/
@@ -612,6 +612,6 @@ To deliver an uncompromising, high-refresh mobile application within the practic
 <div align="center">
 
 **OneGate** &bull; Developed for the **Sumadhura** Developer Practical Assessment  
-*Crafted with clean architecture, and performance-first Flutter.*
+*Made by Avii 💚.*
 
 </div>

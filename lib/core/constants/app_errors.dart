@@ -13,6 +13,7 @@ class AppErrors {
   static const String registrationInProgress = 'Registration is already in progress. Please wait.';
   static const String duplicateRegistration = 'Duplicate registration request prevented.';
   static const String emptyRecycleBinFailed = 'Failed to empty recycle bin.';
+  static const String cameraPermissionRequired = 'Camera permission is required to scan passes.';
 
   // form validation error messages
   static const String nameRequired = 'Full Name is required';
