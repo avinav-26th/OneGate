@@ -10,6 +10,7 @@ import '../../../core/utils/app_snackbar.dart';
 import '../../visitors/presentation/controllers/visitor_providers.dart';
 import '../../visitors/presentation/screens/visitor_details_screen.dart';
 
+// camera viewfinder for hardware pass scanning
 class QrScannerScreen extends ConsumerStatefulWidget {
   final bool isActive;
 
@@ -67,6 +68,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     }
   }
 
+  // ambient light listener to toggle flashlight in dark areas
   void _initLightSensor() {
     try {
       _lightSubscription = Light().lightSensorStream.listen((lux) {
@@ -95,6 +97,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     super.dispose();
   }
 
+  // lookup scanned visitor pass and navigate to profile
   Future<void> _handleBarcode(String rawValue) async {
     if (_isProcessing.value) return;
 
@@ -126,6 +129,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen>
     }
   }
 
+  // fallback dialog when camera cannot scan code
   void _showManualLookupDialog() {
     final isDark = AppColors.isDark(context);
 

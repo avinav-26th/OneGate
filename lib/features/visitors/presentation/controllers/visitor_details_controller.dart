@@ -6,6 +6,7 @@ import '../../domain/visitor_status.dart';
 import 'visitor_list_controller.dart';
 import 'visitor_providers.dart';
 
+// manages state and actions for a single visitor profile
 class VisitorDetailsNotifier extends StateNotifier<AsyncValue<Visitor?>> {
   final VisitorRepository _repository;
   final Ref _ref;
@@ -29,6 +30,7 @@ class VisitorDetailsNotifier extends StateNotifier<AsyncValue<Visitor?>> {
     state = AsyncValue.data(visitor);
   }
 
+  // execute check-in transition with debounce protection
   Future<bool> checkIn(String id) async {
     final key = 'checkIn_$id';
     if (_pendingActions.contains(key) || state.isLoading) {
@@ -57,6 +59,7 @@ class VisitorDetailsNotifier extends StateNotifier<AsyncValue<Visitor?>> {
     }
   }
 
+  // execute check-out transition with debounce protection
   Future<bool> checkOut(String id) async {
     final key = 'checkOut_$id';
     if (_pendingActions.contains(key) || state.isLoading) {

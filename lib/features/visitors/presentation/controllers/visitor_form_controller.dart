@@ -12,6 +12,7 @@ class VisitorFormNotifier extends StateNotifier<AsyncValue<Visitor?>> {
 
   VisitorFormNotifier(this._repository, this._ref) : super(const AsyncValue.data(null));
 
+  // handles visitor registration form submission
   Future<Visitor?> registerVisitor({
     required String name,
     required String mobile,
@@ -48,6 +49,7 @@ class VisitorFormNotifier extends StateNotifier<AsyncValue<Visitor?>> {
     }
   }
 
+  // updates existing visitor record with form changes
   Future<Visitor?> updateVisitor({
     required Visitor existing,
     required String name,

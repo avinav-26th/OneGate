@@ -17,6 +17,7 @@ class RecentVisitorTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
+    // pick latest available activity timestamp
     final timestamp = visitor.checkInTime ?? visitor.checkOutTime ?? visitor.createdAt;
 
     return Card(

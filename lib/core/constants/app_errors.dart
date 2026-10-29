@@ -1,4 +1,5 @@
 class AppErrors {
+  // network and operation error messages
   static const String networkTimeout = 'Connection timed out. Please check your internet connection.';
   static const String networkGeneral = 'Unable to connect to the server. Working in offline mode.';
   static const String visitorNotFound = 'Visitor record not found in registry.';
@@ -13,6 +14,7 @@ class AppErrors {
   static const String duplicateRegistration = 'Duplicate registration request prevented.';
   static const String emptyRecycleBinFailed = 'Failed to empty recycle bin.';
 
+  // form validation error messages
   static const String nameRequired = 'Full Name is required';
   static const String nameMinLength = 'Name must be at least 2 characters';
   static const String nameMaxLength = 'Name cannot exceed 100 characters';

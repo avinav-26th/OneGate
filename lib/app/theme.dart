@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+// active theme mode state provider
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.light);
 
 class AppTheme {
@@ -21,6 +22,7 @@ class AppTheme {
   static const Color statusCheckedIn = Color(0xFF059669);
   static const Color statusCheckedOut = Color(0xFF64748B);
 
+  // light theme specification
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -141,6 +143,7 @@ class AppTheme {
     );
   }
 
+  // dark theme specification
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,

@@ -3,6 +3,7 @@ import '../../features/visitors/domain/visitor.dart';
 import '../../features/visitors/domain/visitor_status.dart';
 import '../utils/date_formatter.dart';
 
+// static choices for dropdowns and chips
 @immutable
 class StaticTierData {
   static const List<String> projects = ['Project A', 'Project B', 'Project C'];
@@ -33,6 +34,7 @@ class ComputedTierMetrics {
     required this.recycleBinCount,
   });
 
+  // computes dashboard metrics from active visitors list
   factory ComputedTierMetrics.fromVisitors(List<Visitor> active, [List<Visitor> bin = const []]) {
     int today = 0;
     int inCount = 0;

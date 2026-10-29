@@ -6,6 +6,7 @@ class DateFormatter {
   static final DateFormat _dateOnlyFormat = DateFormat('dd MMM yyyy');
   static final DateFormat _monthYearFormat = DateFormat('MMMM yyyy');
 
+  // date and time formatting helpers
   static String formatDisplay(DateTime? dateTime) {
     if (dateTime == null) return '-';
     return _displayFormat.format(dateTime.toLocal());
@@ -25,6 +26,7 @@ class DateFormatter {
     return dateTime.toLocal().toIso8601String();
   }
 
+  // parse string timestamps or epoch numbers
   static DateTime? fromIso(String? iso) {
     if (iso == null || iso.isEmpty) return null;
     final parsed = DateTime.tryParse(iso);
@@ -73,6 +75,7 @@ class DateFormatter {
     return local.year == now.year && local.month == now.month;
   }
 
+  // groups dates into buckets for list headers
   static String getDateGroup(DateTime? dateTime) {
     if (dateTime == null) return 'Older';
     if (isToday(dateTime)) return 'Today';

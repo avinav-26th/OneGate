@@ -3,6 +3,7 @@ import '../../../core/utils/date_formatter.dart';
 import 'visit_session.dart';
 import 'visitor_status.dart';
 
+// visitor domain model with kyc data and visit history
 @immutable
 class Visitor {
   final String id;
@@ -37,6 +38,7 @@ class Visitor {
     this.visitHistory = const [],
   });
 
+  // formatted pass identifier for display and qr payload
   String get passCode {
     final upper = id.toUpperCase();
     if (upper.startsWith('VIS')) {
@@ -89,6 +91,7 @@ class Visitor {
     );
   }
 
+  // parse json from mockapi or local preferences
   factory Visitor.fromJson(Map<String, dynamic> json) {
     final checkIn = DateFormatter.fromIso(
       (json['check_in_time'] ?? json['checkInTime'])?.toString(),

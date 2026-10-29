@@ -20,6 +20,7 @@ class VisitorRepositoryImpl implements VisitorRepository {
 
   VisitorRepositoryImpl({required this.apiService});
 
+  // initial seed records for fresh installs without connectivity
   List<Visitor> _initialSeed() {
     final now = DateTime.now();
     return [
@@ -62,6 +63,7 @@ class VisitorRepositoryImpl implements VisitorRepository {
     ];
   }
 
+  // read cached visitors from local storage
   Future<List<Visitor>> _readLocal() async {
     if (_memoryCache != null) {
       return List<Visitor>.from(_memoryCache!);
@@ -93,6 +95,7 @@ class VisitorRepositoryImpl implements VisitorRepository {
     await prefs.setString(_storageKey, json.encode(raw));
   }
 
+  // pending mutations queue for offline synchronization
   Future<List<Map<String, dynamic>>> _readPendingQueue() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_pendingQueueKey);
@@ -118,6 +121,7 @@ class VisitorRepositoryImpl implements VisitorRepository {
     await prefs.remove(_pendingQueueKey);
   }
 
+  // auto purge soft deleted visitors older than 30 days
   @override
   Future<void> autoPurgeExpiredRecycleBin([Duration retention = const Duration(days: 30)]) async {
     final all = await _readLocal();
@@ -132,6 +136,7 @@ class VisitorRepositoryImpl implements VisitorRepository {
     }
   }
 
+  // replay queued mutations when connection is restored
   @override
   Future<void> syncPendingMutations() async {
     final queue = await _readPendingQueue();
@@ -166,6 +171,7 @@ class VisitorRepositoryImpl implements VisitorRepository {
     }
   }
 
+  // fetch visitors with offline-first cache strategy
   @override
   Future<List<Visitor>> getVisitors({bool forceRefresh = false}) async {
     await autoPurgeExpiredRecycleBin();
@@ -210,6 +216,7 @@ class VisitorRepositoryImpl implements VisitorRepository {
       ..sort((a, b) => (b.deletedAt ?? b.createdAt).compareTo(a.deletedAt ?? a.createdAt));
   }
 
+  // query single visitor by id or pass code
   @override
   Future<Visitor> getVisitorById(String id) async {
     final localList = await _readLocal();
@@ -230,6 +237,7 @@ class VisitorRepositoryImpl implements VisitorRepository {
     throw const Failure(AppErrors.visitorNotFound, statusCode: 404);
   }
 
+  // create visitor with double submit guard and offline queue fallback
   @override
   Future<Visitor> createVisitor(Visitor visitor) async {
     final opKey = 'create_${visitor.name.trim().toLowerCase()}_${visitor.mobile.trim()}';
@@ -357,6 +365,7 @@ class VisitorRepositoryImpl implements VisitorRepository {
     }
   }
 
+  // update gate status and append to visit history
   @override
   Future<Visitor> updateStatus(String id, VisitorStatus newStatus, DateTime timestamp) async {
     final opKey = 'status_${id.trim().toLowerCase()}_${newStatus.name}';

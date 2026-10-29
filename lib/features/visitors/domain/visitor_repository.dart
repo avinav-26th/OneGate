@@ -1,6 +1,7 @@
 import 'visitor.dart';
 import 'visitor_status.dart';
 
+// repository contract for visitor registry operations
 abstract class VisitorRepository {
   Future<List<Visitor>> getVisitors({bool forceRefresh = false});
   Future<List<Visitor>> getRecycleBinVisitors();

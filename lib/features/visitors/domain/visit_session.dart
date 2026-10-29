@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../../../core/utils/date_formatter.dart';
 
+// single check in and check out session record
 @immutable
 class VisitSession {
   final String id;
@@ -19,6 +20,7 @@ class VisitSession {
 
   bool get isCompleted => checkOutTime != null;
 
+  // human readable duration between check in and check out
   String get durationText {
     final end = checkOutTime ?? DateTime.now();
     final diff = end.difference(checkInTime);

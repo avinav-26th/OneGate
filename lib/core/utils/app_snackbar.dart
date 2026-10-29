@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
 class AppSnackBar {
+  // displays floating feedback snackbar with auto dismiss
   static void show(
     BuildContext context, {
     required String message,
@@ -34,6 +35,7 @@ class AppSnackBar {
     });
   }
 
+  // predefined alert styles
   static void success(BuildContext context, String message, {SnackBarAction? action}) {
     show(
       context,

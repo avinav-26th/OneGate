@@ -1,5 +1,6 @@
 import 'visitor_status.dart';
 
+// enforces state machine rules for gate transitions
 class VisitStatusPolicy {
   static bool canCheckIn(VisitorStatus status) {
     return status == VisitorStatus.registered || status == VisitorStatus.checkedOut;
@@ -13,6 +14,7 @@ class VisitStatusPolicy {
     return status == VisitorStatus.checkedOut;
   }
 
+  // status transition handlers with validation
   static VisitorStatus nextStatusOnCheckIn(VisitorStatus current) {
     if (!canCheckIn(current)) {
       throw StateError('Cannot check in visitor with status ${current.label}');

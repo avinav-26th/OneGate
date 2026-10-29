@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 
+// placeholder displayed when search or list is empty
 class EmptyStateWidget extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -59,6 +60,7 @@ class EmptyStateWidget extends StatelessWidget {
                 height: 1.4,
               ),
             ),
+            // optional action button to register or clear filters
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 24),
               ElevatedButton(

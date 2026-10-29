@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import '../constants/app_errors.dart';
 
 class Validators {
+  // form field validation rules
   static String? validateName(String? value) {
     if (value == null || value.trim().isEmpty) {
       return AppErrors.nameRequired;
@@ -44,6 +45,7 @@ class Validators {
   }
 }
 
+// input formatter that restricts word count
 class WordLimitFormatter extends TextInputFormatter {
   final int maxWords;
 

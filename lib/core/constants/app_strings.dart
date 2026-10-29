@@ -1,10 +1,12 @@
 class AppStrings {
+  // general branding and header titles
   static const String appName = 'OneGate';
   static const String appTagline = 'One access desk. Every project.';
   static const String frontDeskTag = 'Front Desk & Security';
   static const String consoleTitle = 'Visitor Management Console';
   static const String consoleSubtitle = 'Manage project visits, monitor gate entry/exit, and issue digital QR passes.';
   
+  // navigation labels and actions
   static const String scanGatePass = 'Scan Gate Pass';
   static const String dashboard = 'Dashboard';
   static const String visitors = 'Visitors';

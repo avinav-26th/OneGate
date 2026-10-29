@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'main_navigation_shell.dart';
 import 'theme.dart';
 
+// root application widget with theme configuration
 class OneGateApp extends ConsumerWidget {
   const OneGateApp({super.key});
 
@@ -17,6 +18,7 @@ class OneGateApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       themeAnimationDuration: Duration.zero,
+      // dismiss keyboard when tapping outside inputs
       builder: (context, child) {
         return GestureDetector(
           behavior: HitTestBehavior.translucent,

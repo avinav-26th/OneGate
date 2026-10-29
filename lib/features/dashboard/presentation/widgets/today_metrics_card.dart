@@ -20,6 +20,7 @@ class TodayMetricsCard extends StatelessWidget {
     required this.onTapCheckedOut,
   });
 
+  // format numbers with comma separators
   String _formatCount(int value) {
     return NumberFormat.decimalPattern().format(value);
   }

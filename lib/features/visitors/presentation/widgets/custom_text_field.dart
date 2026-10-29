@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/app_colors.dart';
 
+// form text input with label and prefix icon
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -28,6 +29,7 @@ class CustomTextField extends StatelessWidget {
     this.inputFormatters,
   });
 
+  // build labeled input field
   @override
   Widget build(BuildContext context) {
     return Column(

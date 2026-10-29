@@ -1,3 +1,4 @@
+// lifecycle states of a visitor pass
 enum VisitorStatus {
   registered('Registered'),
   checkedIn('Checked In'),
@@ -6,6 +7,7 @@ enum VisitorStatus {
   final String label;
   const VisitorStatus(this.label);
 
+  // parse string from api or storage
   static VisitorStatus fromString(String? value) {
     if (value == null) return VisitorStatus.registered;
     final normalized = value.trim().toLowerCase();

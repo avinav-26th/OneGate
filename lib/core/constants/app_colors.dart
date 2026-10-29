@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
+  // brand and neutral palette colors
   static const Color navy = Color(0xFF142B3B);
   static const Color mintTeal = Color(0xFF38DCC0);
   static const Color offWhite = Color(0xFFF4F7F8);
@@ -23,6 +24,7 @@ class AppColors {
   static const Color chipBackground = Color(0xFFF8FAFC);
   static const Color divider = Color(0xFFF1F5F9);
 
+  // dark mode color palette
   static const Color darkBackground = Color(0xFF0F172A);
   static const Color darkSurface = Color(0xFF1E293B);
   static const Color darkBorder = Color(0xFF334155);
@@ -30,6 +32,7 @@ class AppColors {
   static const Color darkTextSecondary = Color(0xFF94A3B8);
   static const Color darkChip = Color(0xFF24334A);
 
+  // theme responsive color getters
   static bool isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
 

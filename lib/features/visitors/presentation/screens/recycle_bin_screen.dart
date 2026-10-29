@@ -23,6 +23,7 @@ class _RecycleBinScreenState extends ConsumerState<RecycleBinScreen> {
     });
   }
 
+  // calculate days until automatic record purge
   int _daysRemaining(DateTime? deletedAt) {
     if (deletedAt == null) return 30;
     final diff = DateTime.now().difference(deletedAt).inDays;
@@ -30,6 +31,7 @@ class _RecycleBinScreenState extends ConsumerState<RecycleBinScreen> {
     return rem < 0 ? 0 : rem;
   }
 
+  // dialog to permanently purge all quarantined visitors
   void _confirmEmptyBin(BuildContext context) {
     showDialog(
       context: context,
@@ -68,6 +70,7 @@ class _RecycleBinScreenState extends ConsumerState<RecycleBinScreen> {
     );
   }
 
+  // dialog to permanently remove a single visitor
   void _confirmPermanentDelete(BuildContext context, String id, String name) {
     showDialog(
       context: context,

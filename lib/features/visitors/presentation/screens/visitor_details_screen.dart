@@ -17,6 +17,7 @@ import '../widgets/delete_dialog.dart';
 import '../widgets/status_chip.dart';
 import 'visitor_form_screen.dart';
 
+// visitor profile and digital pass details screen
 class VisitorDetailsScreen extends ConsumerStatefulWidget {
   final Visitor visitor;
 
@@ -57,6 +58,7 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen>
     super.dispose();
   }
 
+  // collapse or expand header animation based on scroll or tap
   void _setHeaderCollapsed(bool collapsed) {
     if (_headerCollapsed == collapsed) return;
     _headerCollapsed = collapsed;
@@ -100,6 +102,7 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen>
     return false;
   }
 
+  // update visitor gate status to checked in
   Future<void> _handleCheckIn(Visitor visitor) async {
     if (!VisitStatusPolicy.canCheckIn(visitor.status)) return;
 
@@ -117,6 +120,7 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen>
     }
   }
 
+  // update visitor gate status to checked out
   Future<void> _handleCheckOut(Visitor visitor) async {
     if (!VisitStatusPolicy.canCheckOut(visitor.status)) return;
 
@@ -256,6 +260,7 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen>
     );
   }
 
+  // kyc profile attributes card
   Widget _buildVisitorInfoCard(BuildContext context, Visitor visitor) {
     return Card(
       child: Padding(
@@ -289,6 +294,7 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen>
     );
   }
 
+  // chronological audit trail of all visit sessions
   Widget _buildVisitActivityTimeline(BuildContext context, Visitor visitor) {
     final history = visitor.visitHistory;
 
@@ -568,6 +574,7 @@ class _VisitorDetailsScreenState extends ConsumerState<VisitorDetailsScreen>
   }
 }
 
+// collapsible qr pass card header with smooth height interpolation
 class _QrHeader extends StatelessWidget {
   final Visitor visitor;
   final double t;

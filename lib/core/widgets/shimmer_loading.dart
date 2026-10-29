@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
+// repeating animated gradient shader mask
 class ShimmerLoading extends StatefulWidget {
   final Widget child;
 
@@ -90,6 +91,7 @@ class ShimmerBox extends StatelessWidget {
   }
 }
 
+// skeleton placeholder for today metrics card
 class TodayMetricsShimmer extends StatelessWidget {
   const TodayMetricsShimmer({super.key});
 
@@ -224,6 +226,7 @@ class RecentVisitorTileShimmer extends StatelessWidget {
   }
 }
 
+// skeleton list for recent visitors
 class RecentVisitorListShimmer extends StatelessWidget {
   final int count;
 
@@ -300,6 +303,7 @@ class VisitorCardShimmer extends StatelessWidget {
   }
 }
 
+// full screen skeleton for visitor registry
 class VisitorListShimmer extends StatelessWidget {
   final int count;
 

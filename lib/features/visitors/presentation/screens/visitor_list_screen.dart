@@ -15,6 +15,7 @@ import 'recycle_bin_screen.dart';
 import 'visitor_details_screen.dart';
 import 'visitor_form_screen.dart';
 
+// visitor directory with search filter chips and lazy loading
 class VisitorListScreen extends ConsumerStatefulWidget {
   const VisitorListScreen({super.key});
 
@@ -39,6 +40,7 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
     _scrollController = ScrollController()..addListener(_onScroll);
   }
 
+  // infinite scroll listener to load next batch
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
@@ -71,6 +73,7 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
     );
   }
 
+  // soft delete visitor with 3-second undo snackbar
   void _confirmDelete(Visitor visitor) {
     DeleteDialog.show(
       context,
@@ -96,6 +99,7 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
     );
   }
 
+  // bottom sheet to change sort order
   void _showSortOptions() {
     final currentSort = ref.read(visitorSortOptionProvider);
     final isDark = AppColors.isDark(context);
@@ -453,6 +457,7 @@ class _VisitorListScreenState extends ConsumerState<VisitorListScreen>
                   final sections = groupedMap.entries.toList();
                   final hasMore = ref.watch(hasMoreVisitorsProvider);
 
+                  // paginated list rendering with progressive bottom shimmer
                   return ListView.builder(
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),

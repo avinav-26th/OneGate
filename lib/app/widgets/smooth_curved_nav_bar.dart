@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 
+// bottom navigation item model
 class SmoothCurvedNavItem {
   final IconData icon;
   final IconData activeIcon;
@@ -13,6 +14,7 @@ class SmoothCurvedNavItem {
   });
 }
 
+// custom bottom bar with curved cutout and floating indicator
 class SmoothCurvedNavBar extends StatelessWidget {
   final PageController pageController;
   final ValueChanged<int> onTabSelected;
@@ -169,6 +171,7 @@ class SmoothCurvedNavBar extends StatelessWidget {
   }
 }
 
+// paints curved cutout and top edge ambient shadow
 class _CurvedNavPainter extends CustomPainter {
   final double activeCenterX;
   final Color color;

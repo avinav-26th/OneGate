@@ -12,6 +12,7 @@ import 'widgets/recent_visitor_tile.dart';
 import 'widgets/today_metrics_card.dart';
 import '../../../core/widgets/shimmer_loading.dart';
 
+// main security dashboard overview screen
 class DashboardScreen extends ConsumerStatefulWidget {
   final Function(int)? onNavigateTab;
 
@@ -117,6 +118,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
               const SizedBox(height: 10),
+              // today's activity metrics card with quick filter navigation
               metricsAsync.when(
                 data: (metrics) => TodayMetricsCard(
                   totalToday: metrics.totalToday,
@@ -147,6 +149,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
               const SizedBox(height: 20),
+              // quick operation shortcuts for register and scanner
               Text(
                 'Quick Operations',
                 style: TextStyle(
@@ -294,6 +297,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ],
               ),
               const SizedBox(height: 8),
+              // chronological recent visitors list
               visitorsAsync.when(
                 data: (visitors) {
                   if (visitors.isEmpty) {

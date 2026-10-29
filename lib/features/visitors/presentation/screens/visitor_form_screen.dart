@@ -14,6 +14,7 @@ import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 import 'visitor_details_screen.dart';
 
+// registration and edit form for visitor kyc details
 class VisitorFormScreen extends ConsumerStatefulWidget {
   final Visitor? existingVisitor;
 
@@ -90,6 +91,7 @@ class _VisitorFormScreenState extends ConsumerState<VisitorFormScreen> {
     }
   }
 
+  // select visitor type from modal dialog
   void _showVisitorTypePopup() {
     final isDark = AppColors.isDark(context);
 
@@ -250,6 +252,7 @@ class _VisitorFormScreenState extends ConsumerState<VisitorFormScreen> {
     );
   }
 
+  // validate inputs and submit new or updated visitor
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -444,6 +447,7 @@ class _VisitorFormScreenState extends ConsumerState<VisitorFormScreen> {
                   ),
                 ],
                 const SizedBox(height: 16),
+                // destination project selection dropdown
                 Text(
                   'Destination Project *',
                   style: TextStyle(
@@ -511,6 +515,7 @@ class _VisitorFormScreenState extends ConsumerState<VisitorFormScreen> {
                   ),
                 ),
                 const SizedBox(height: 6),
+                // quick select chips for common visit purposes
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,

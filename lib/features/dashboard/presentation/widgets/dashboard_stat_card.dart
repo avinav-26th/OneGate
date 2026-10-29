@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// stat card displaying count and label
 class DashboardStatCard extends StatelessWidget {
   final String title;
   final int count;

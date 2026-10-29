@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 class GreetingBanner extends StatelessWidget {
   const GreetingBanner({super.key});
 
+  // greeting text based on time of day
   String _getGreeting(int hour) {
     if (hour >= 5 && hour < 12) return 'Good morning!';
     if (hour >= 12 && hour < 17) return 'Good afternoon!';

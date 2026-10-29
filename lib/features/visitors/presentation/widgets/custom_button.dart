@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// primary and outlined action button with loading spinner
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -47,6 +48,7 @@ class CustomButton extends StatelessWidget {
     );
   }
 
+  // render button label icon or progress indicator
   Widget _buildChild(BuildContext context, Color fgColor) {
     if (isLoading) {
       return SizedBox(

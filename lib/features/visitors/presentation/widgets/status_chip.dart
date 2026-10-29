@@ -13,6 +13,7 @@ class StatusChip extends StatelessWidget {
     Color bg;
     Color fg;
 
+    // resolve badge colors based on visitor status
     switch (status) {
       case VisitorStatus.registered:
         bg = isDark ? const Color(0xFF78350F).withValues(alpha: 0.35) : const Color(0xFFFEF3C7);

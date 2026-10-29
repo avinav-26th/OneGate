@@ -8,6 +8,7 @@ import '../features/visitors/presentation/screens/visitor_form_screen.dart';
 import '../features/visitors/presentation/screens/visitor_list_screen.dart';
 import 'widgets/smooth_curved_nav_bar.dart';
 
+// active tab navigation index provider
 final mainNavigationIndexProvider = StateProvider<int>((ref) => 1);
 
 class MainNavigationShell extends ConsumerStatefulWidget {
@@ -32,6 +33,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     super.dispose();
   }
 
+  // switch tab and smoothly animate page controller
   void _onTabSelected(int index) {
     if (ref.read(mainNavigationIndexProvider) == index) return;
     ref.read(mainNavigationIndexProvider.notifier).state = index;
@@ -115,6 +117,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
               ),
             ),
           ),
+          // scale down fab when swiping toward scanner tab
           builder: (context, child) {
             final page = (_pageController.hasClients && _pageController.position.hasContentDimensions)
                 ? (_pageController.page ?? currentIndex.toDouble())

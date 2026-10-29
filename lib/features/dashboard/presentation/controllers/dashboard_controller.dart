@@ -3,6 +3,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../visitors/domain/visitor_status.dart';
 import '../../../visitors/presentation/controllers/visitor_list_controller.dart';
 
+// metric data model for today's gate activity
 class DashboardMetrics {
   final int totalToday;
   final int currentlyCheckedIn;
@@ -20,6 +21,7 @@ class DashboardMetrics {
         checkedOutToday = 0;
 }
 
+// aggregates today's total, in, and out counts from active visitors
 final dashboardMetricsProvider = Provider<AsyncValue<DashboardMetrics>>((ref) {
   final visitorsAsync = ref.watch(visitorListNotifierProvider);
 

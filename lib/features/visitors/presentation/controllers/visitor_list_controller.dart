@@ -33,6 +33,7 @@ final visitorQuickFilterProvider = StateProvider<VisitorQuickFilter>((ref) => Vi
 final visitorSortOptionProvider = StateProvider<VisitorSortOption>((ref) => VisitorSortOption.newest);
 final visitorDisplayLimitProvider = StateProvider<int>((ref) => 15);
 
+// manages active visitor registry with swr cache and sync
 class VisitorListNotifier extends StateNotifier<AsyncValue<List<Visitor>>> {
   final VisitorRepository _repository;
   final Ref _ref;
@@ -130,6 +131,7 @@ final visitorListNotifierProvider =
   return VisitorListNotifier(repository, ref);
 });
 
+// manages soft-deleted visitors in recycle bin
 class RecycleBinNotifier extends StateNotifier<AsyncValue<List<Visitor>>> {
   final VisitorRepository _repository;
 
@@ -225,6 +227,7 @@ final recentVisitorsProvider = Provider<AsyncValue<List<Visitor>>>((ref) {
   });
 });
 
+// filters and sorts active visitors based on search and selected chips
 final filteredVisitorsProvider = Provider<AsyncValue<List<Visitor>>>((ref) {
   final visitorsAsync = ref.watch(visitorListNotifierProvider);
   final searchQuery = ref.watch(visitorSearchQueryProvider).trim().toLowerCase();
@@ -280,6 +283,7 @@ final hasMoreVisitorsProvider = Provider<bool>((ref) {
   );
 });
 
+// groups paginated visitors into date or letter sections
 final groupedVisitorsProvider = Provider<AsyncValue<Map<String, List<Visitor>>>>((ref) {
   final filteredAsync = ref.watch(filteredVisitorsProvider);
   final limit = ref.watch(visitorDisplayLimitProvider);
